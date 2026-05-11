@@ -25,6 +25,7 @@ export interface TrackingInfo {
   eta?: string;
   lastStation?: string;
   lastArrival?: string;
+  distanceToNext?: number;
   events?: {
     type: string;
     location: string;

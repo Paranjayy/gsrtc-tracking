@@ -6,23 +6,60 @@ import {
   Search, 
   Filter, 
   ArrowRight, 
-  Clock, 
   Info, 
   Navigation,
   Grid,
   List as ListIcon,
   ChevronRight,
-  TrendingUp,
   Map as MapIcon,
   Activity,
   History,
   Navigation2,
   Share2,
-  AlertCircle
+  AlertCircle,
+  Calendar,
+  Zap,
+  Locate
 } from 'lucide-react';
 import { MOCK_TRIPS } from '../services/mockData';
 import { GSRTCService } from '../services/gsrtc';
 import type { BusTrip, TrackingInfo } from '../types';
+
+const MagicDatePicker: React.FC<{ selectedDate: string; onChange: (date: string) => void }> = ({ selectedDate, onChange }) => {
+  const dates = useMemo(() => {
+    const arr = [];
+    const today = new Date();
+    for (let i = 0; i < 14; i++) {
+      const d = new Date();
+      d.setDate(today.getDate() + i);
+      arr.push(d);
+    }
+    return arr;
+  }, []);
+
+  return (
+    <div className="flex gap-2 overflow-x-auto py-2 no-scrollbar scroll-smooth">
+      {dates.map((date, i) => {
+        const isSelected = date.toISOString().split('T')[0] === selectedDate;
+        return (
+          <button
+            key={i}
+            onClick={() => onChange(date.toISOString().split('T')[0])}
+            className={`flex-shrink-0 w-16 h-20 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all border ${
+              isSelected 
+                ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' 
+                : 'glass-light border-white/5 text-text-dim hover:border-white/20'
+            }`}
+          >
+            <span className="text-[10px] uppercase font-bold tracking-widest">{date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+            <span className="text-xl font-bold">{date.getDate()}</span>
+            <span className="text-[10px] opacity-60 font-medium">{date.toLocaleDateString('en-US', { month: 'short' })}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+};
 
 const GSRTCNexus: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'tracking' | 'booking'>('booking');
@@ -33,6 +70,7 @@ const GSRTCNexus: React.FC = () => {
   const [groupBy, setGroupBy] = useState<'none' | 'type'>('none');
   const [trackingData, setTrackingData] = useState<TrackingInfo | null>(null);
   const [isLive, setIsLive] = useState(false);
+  const [travelDate, setTravelDate] = useState('2026-05-14');
 
   // Deep linking for tracking
   useEffect(() => {
@@ -157,43 +195,59 @@ const GSRTCNexus: React.FC = () => {
               exit={{ opacity: 0, y: -20 }}
               className="space-y-8"
             >
-              {/* Search Section */}
-              <section className="glass p-8 rounded-3xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-10 opacity-10 pointer-events-none">
-                  <TrendingUp size={200} />
-                </div>
-                
-                <div className="max-w-2xl">
-                  <h2 className="text-4xl font-bold mb-2">Find Your <span className="text-primary">Journey</span></h2>
-                  <p className="text-text-muted mb-8">Search across 200+ daily trips with real-time seat availability and premium amenities.</p>
+              {/* Redesigned Search Section */}
+              <section className="space-y-6">
+                <div className="flex flex-col md:flex-row items-end justify-between gap-6">
+                  <div className="max-w-xl">
+                    <h2 className="text-5xl font-bold tracking-tighter mb-2">Nexus <span className="text-primary">Booking</span></h2>
+                    <p className="text-text-muted text-lg">Intelligent route discovery with real-time seat telemetry.</p>
+                  </div>
+                  <div className="flex items-center gap-2 glass-light p-1.5 rounded-2xl border border-white/5">
+                    <button className="px-4 py-2 rounded-xl text-sm font-bold bg-white/5 text-white flex items-center gap-2">
+                       <Zap size={14} className="text-primary" /> Instant Book
+                    </button>
+                    <button className="px-4 py-2 rounded-xl text-sm font-medium text-text-dim hover:text-white transition-all">
+                       Corporate
+                    </button>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="glass-light p-4 rounded-2xl border border-white/5 flex flex-col gap-1">
-                    <label className="text-[10px] text-primary uppercase font-bold tracking-wider">From</label>
-                    <div className="flex items-center gap-2">
-                      <MapPin size={18} className="text-text-muted" />
-                      <input className="bg-transparent w-full text-lg font-medium" defaultValue="Junagadh Busport" />
+                <div className="glass p-2 rounded-[2rem] border border-white/5 flex flex-col md:flex-row items-stretch gap-2">
+                  <div className="flex-1 flex flex-col md:flex-row gap-2">
+                    <div className="flex-1 glass-light px-6 py-4 rounded-3xl flex flex-col justify-center border border-transparent hover:border-primary/20 transition-all group">
+                      <span className="text-[10px] text-primary font-bold uppercase tracking-widest mb-1 group-hover:translate-x-1 transition-transform">Origin</span>
+                      <div className="flex items-center gap-3">
+                        <Locate size={18} className="text-text-dim" />
+                        <input className="bg-transparent w-full text-xl font-bold outline-none" defaultValue="Junagadh Busport" />
+                      </div>
+                    </div>
+                    
+                    <div className="w-12 h-12 self-center bg-white/5 rounded-full flex items-center justify-center rotate-90 md:rotate-0 text-text-dim hover:text-primary transition-colors cursor-pointer">
+                       <ArrowRight size={20} />
+                    </div>
+
+                    <div className="flex-1 glass-light px-6 py-4 rounded-3xl flex flex-col justify-center border border-transparent hover:border-primary/20 transition-all group">
+                      <span className="text-[10px] text-primary font-bold uppercase tracking-widest mb-1 group-hover:translate-x-1 transition-transform">Destination</span>
+                      <div className="flex items-center gap-3">
+                        <MapPin size={18} className="text-text-dim" />
+                        <input className="bg-transparent w-full text-xl font-bold outline-none" defaultValue="Rajkot Busport" />
+                      </div>
                     </div>
                   </div>
-                  <div className="glass-light p-4 rounded-2xl border border-white/5 flex flex-col gap-1">
-                    <label className="text-[10px] text-primary uppercase font-bold tracking-wider">To</label>
-                    <div className="flex items-center gap-2">
-                      <Navigation size={18} className="text-text-muted" />
-                      <input className="bg-transparent w-full text-lg font-medium" defaultValue="Rajkot Busport" />
-                    </div>
-                  </div>
-                  <div className="glass-light p-4 rounded-2xl border border-white/5 flex flex-col gap-1">
-                    <label className="text-[10px] text-primary uppercase font-bold tracking-wider">Travel Date</label>
-                    <div className="flex items-center gap-2">
-                      <Clock size={18} className="text-text-muted" />
-                      <input type="date" className="bg-transparent w-full text-lg font-medium" defaultValue="2026-05-14" />
-                    </div>
-                  </div>
-                  <button className="primary-button flex items-center justify-center gap-2 h-full text-lg">
-                    <Search size={20} />
+
+                  <button className="primary-button md:w-48 rounded-[1.5rem] flex items-center justify-center gap-3 text-xl font-bold py-6">
+                    <Search size={24} />
                     Search
                   </button>
+                </div>
+
+                <div className="space-y-4">
+                   <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-bold uppercase tracking-widest text-text-dim flex items-center gap-2">
+                         <Calendar size={14} className="text-primary" /> Select Travel Date
+                      </h3>
+                   </div>
+                   <MagicDatePicker selectedDate={travelDate} onChange={setTravelDate} />
                 </div>
               </section>
 
@@ -296,51 +350,63 @@ const GSRTCNexus: React.FC = () => {
                           <motion.div
                             layout
                             key={trip.id}
-                            className={`glass p-6 rounded-2xl group border border-white/5 hover:border-primary/30 transition-all ${
-                              viewMode === 'list' ? 'flex flex-col md:flex-row items-center gap-8' : 'flex flex-col'
+                            className={`glass p-8 rounded-[2.5rem] group border border-white/5 hover:border-primary/40 transition-all shadow-xl hover:shadow-primary/5 ${
+                              viewMode === 'list' ? 'flex flex-col md:flex-row items-stretch gap-12' : 'flex flex-col'
                             }`}
                           >
-                            <div className="flex-1 flex flex-col gap-4 w-full">
+                            <div className="flex-1 flex flex-col justify-between gap-6 w-full">
                               <div className="flex items-center justify-between">
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
-                                  trip.busType === 'VOLVO' ? 'border-secondary text-secondary' : 'border-text-dim text-text-muted'
-                                }`}>
-                                  {trip.busType}
-                                </span>
-                                <span className="text-xs text-text-dim font-mono">{trip.busNumber}</span>
+                                <div className="flex items-center gap-3">
+                                  <span className={`text-[10px] font-black px-3 py-1 rounded-full border ${
+                                    trip.busType === 'VOLVO' ? 'bg-secondary/10 border-secondary text-secondary' : 'bg-white/5 border-white/10 text-text-dim'
+                                  }`}>
+                                    {trip.busType}
+                                  </span>
+                                  <span className="text-[10px] font-bold text-text-dim/60 tracking-widest uppercase">{trip.busNumber}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                   <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                   <span className="text-[10px] font-bold text-green-500 uppercase">Available</span>
+                                </div>
                               </div>
+                              
+                              <div className="flex items-center justify-between gap-8 relative">
+                                <div className="z-10 bg-black/20 backdrop-blur-md p-4 rounded-3xl border border-white/5 min-w-[120px]">
+                                  <p className="text-4xl font-black tracking-tighter">{trip.departureTime}</p>
+                                  <p className="text-sm font-bold text-text-dim mt-1">{trip.origin}</p>
+                                </div>
 
-                              <div className="flex items-center justify-between gap-4">
-                                <div className="text-center md:text-left">
-                                  <p className="text-2xl font-bold">{trip.departureTime}</p>
-                                  <p className="text-xs text-text-dim">{trip.origin}</p>
-                                </div>
-                                <div className="flex-1 flex flex-col items-center gap-1">
-                                  <p className="text-[10px] text-text-dim font-medium">{trip.duration}</p>
-                                  <div className="w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent relative">
-                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-primary" />
+                                <div className="flex-1 flex flex-col items-center gap-2 px-4">
+                                  <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">{trip.duration}</span>
+                                  <div className="w-full h-[2px] bg-white/5 relative">
+                                    <div className="absolute top-1/2 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-[#05070a] border-2 border-primary shadow-[0_0_15px_rgba(96,165,250,0.5)] flex items-center justify-center">
+                                       <div className="w-1 h-1 rounded-full bg-primary" />
+                                    </div>
                                   </div>
-                                  <p className="text-[10px] text-primary font-bold">DIRECT</p>
+                                  <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest">DIRECT</span>
                                 </div>
-                                <div className="text-center md:text-right">
-                                  <p className="text-2xl font-bold">{trip.arrivalTime}</p>
-                                  <p className="text-xs text-text-dim">{trip.destination}</p>
+
+                                <div className="z-10 bg-black/20 backdrop-blur-md p-4 rounded-3xl border border-white/5 text-right min-w-[120px]">
+                                  <p className="text-4xl font-black tracking-tighter">{trip.arrivalTime}</p>
+                                  <p className="text-sm font-bold text-text-dim mt-1">{trip.destination}</p>
                                 </div>
                               </div>
                             </div>
 
-                            <div className={`flex items-center gap-6 ${viewMode === 'list' ? 'md:border-l border-white/5 md:pl-8' : 'mt-6 pt-4 border-t border-white/5'}`}>
-                              <div className="text-right">
-                                <p className="text-2xl font-bold text-white">₹{trip.fare}</p>
-                                <p className={`text-xs ${trip.seatsAvailable < 10 ? 'text-accent' : 'text-text-muted'}`}>
-                                  {trip.seatsAvailable} Seats Left
+                            <div className={`flex flex-col justify-between gap-6 ${viewMode === 'list' ? 'md:border-l md:border-white/5 md:pl-12 md:min-w-[200px]' : 'mt-8 pt-8 border-t border-white/5'}`}>
+                              <div className="text-right space-y-1">
+                                <p className="text-[10px] text-text-dim uppercase font-black tracking-widest">Starting from</p>
+                                <p className="text-5xl font-black text-white tracking-tighter">₹{trip.fare}</p>
+                                <p className={`text-xs font-bold ${trip.seatsAvailable < 10 ? 'text-accent' : 'text-primary'}`}>
+                                  {trip.seatsAvailable} Seats Remaining
                                 </p>
                               </div>
                               <button 
-                                className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all"
+                                className="w-full h-16 bg-white/5 rounded-2xl flex items-center justify-center gap-3 group-hover:bg-primary group-hover:text-white transition-all font-black text-sm uppercase tracking-widest border border-white/10 group-hover:border-primary shadow-xl"
                                 onClick={() => window.open('https://gsrtc.in/site/', '_blank')}
                               >
-                                <ArrowRight size={20} />
+                                Select Seat <ArrowRight size={18} />
                               </button>
                             </div>
                           </motion.div>
@@ -424,7 +490,10 @@ const GSRTCNexus: React.FC = () => {
                           <div className="mt-6 pt-4 border-t border-white/5 space-y-3">
                             <div className="flex items-center justify-between text-xs">
                               <span className="text-text-dim font-medium uppercase tracking-tighter truncate">Next: {trackingData.nextStation}</span>
-                              <span className="text-primary font-bold">ETA: {trackingData.eta}</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-text-dim font-bold">ETA: {trackingData.eta}</span>
+                                <span className="text-primary font-bold">({trackingData.distanceToNext} KM)</span>
+                              </div>
                             </div>
                             <div className="flex items-center justify-between text-[10px] font-mono text-text-dim bg-white/5 p-2 rounded-lg">
                               <span>Lat: {trackingData.lat}</span>
