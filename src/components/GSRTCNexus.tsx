@@ -77,11 +77,11 @@ const StationAutocomplete: React.FC<{ value: string; onChange: (val: string) => 
       <div className="bg-white/5 px-8 py-6 rounded-[2rem] flex flex-col justify-center border border-white/5 hover:border-primary/40 transition-all group focus-within:border-primary focus-within:bg-white/[0.08]">
         <span className="text-[10px] text-primary font-black uppercase tracking-[0.3em] mb-2 group-hover:translate-x-1 transition-transform">{label}</span>
         <div className="flex items-center gap-4">
-          <div className="p-2 bg-primary/10 rounded-xl">
+          <div className="p-2 bg-primary/10 rounded-xl shrink-0">
             {label === 'Origin' ? <Locate size={20} className="text-primary" /> : <MapPin size={20} className="text-primary" />}
           </div>
           <input 
-            className="bg-transparent w-full text-2xl font-black outline-none placeholder:text-text-dim/20 text-editorial tracking-tight" 
+            className="bg-transparent w-full text-lg md:text-xl font-black outline-none placeholder:text-text-dim/40 text-editorial tracking-tight truncate" 
             placeholder={`Enter ${label}...`}
             value={value}
             onChange={(e) => { onChange(e.target.value); setShow(true); }}
@@ -329,51 +329,51 @@ const GSRTCNexus: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-20">
-      {/* Premium Header */}
-      <header className="glass fixed top-0 w-full z-50 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-            <Bus className="text-white" size={22} />
+      {/* Premium Header & Live Ticker Container */}
+      <div className="fixed top-0 left-0 w-full z-50 flex flex-col">
+        <header className="glass px-6 py-4 flex items-center justify-between border-b border-white/5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
+              <Bus className="text-white" size={22} />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight">GSRTC <span className="text-primary">NEXUS</span></h1>
+              <p className="text-[10px] text-text-dim uppercase tracking-widest font-medium">Advanced Transit Intelligence</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold tracking-tight">GSRTC <span className="text-primary">NEXUS</span></h1>
-            <p className="text-[10px] text-text-dim uppercase tracking-widest font-medium">Advanced Transit Intelligence</p>
-          </div>
-        </div>
-        
-        <nav className="hidden md:flex items-center gap-1 glass-panel p-1.5 rounded-full text-[10px]">
-          {(['dashboard', 'booking', 'tracking'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-8 py-2 rounded-full font-black transition-all uppercase tracking-[0.2em] ${
-                activeTab === tab 
-                  ? 'bg-primary text-white shadow-xl shadow-primary/20' 
-                  : 'text-text-muted hover:text-white hover:bg-white/5'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </nav>
+          
+          <nav className="hidden md:flex items-center gap-1 glass-panel p-1.5 rounded-full text-[10px]">
+            {(['dashboard', 'booking', 'tracking'] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-8 py-2 rounded-full font-black transition-all uppercase tracking-[0.2em] ${
+                  activeTab === tab 
+                    ? 'bg-primary text-white shadow-xl shadow-primary/20' 
+                    : 'text-text-muted hover:text-white hover:bg-white/5'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </nav>
 
-        <div className="flex items-center gap-4">
-          <div className="hidden sm:block text-right">
-            <p className="text-xs text-text-muted">Current Region</p>
-            <p className="text-sm font-semibold">Gujarat, India</p>
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:block text-right">
+              <p className="text-xs text-text-muted">Current Region</p>
+              <p className="text-sm font-semibold">Gujarat, India</p>
+            </div>
+            <div className="w-10 h-10 rounded-full glass-light flex items-center justify-center border border-white/10">
+              <Info size={18} className="text-text-muted" />
+            </div>
           </div>
-          <div className="w-10 h-10 rounded-full glass-light flex items-center justify-center border border-white/10">
-            <Info size={18} className="text-text-muted" />
-          </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Live Ticker Bar — below fixed header */}
-      <div className="fixed top-[72px] w-full z-40">
+        {/* Live Ticker Bar */}
         <TickerBar />
       </div>
 
-      <main className="pt-36 px-4 md:px-6 max-w-7xl mx-auto">
+      <main className="pt-44 px-4 md:px-6 max-w-7xl mx-auto">
         <AnimatePresence mode="wait">
           {activeTab === 'dashboard' ? (
              <motion.div
