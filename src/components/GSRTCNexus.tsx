@@ -116,22 +116,68 @@ const StationAutocomplete: React.FC<{ value: string; onChange: (val: string) => 
 };
 
 const TerminalFeed: React.FC<{ logs: string[] }> = ({ logs }) => {
+  const bottomRef = React.useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [logs]);
+
   return (
-    <div className="bg-black/40 rounded-2xl p-4 font-mono text-[10px] h-32 overflow-y-auto border border-white/5 space-y-1 no-scrollbar">
-       <div className="flex items-center gap-2 text-primary font-bold mb-2">
-          <Terminal size={12} /> TELEMETRY_STREAM_VTS_LATEST
+    <div className="bg-black/60 rounded-2xl p-4 font-mono text-[10px] h-40 overflow-y-auto border border-green-500/10 space-y-1 no-scrollbar">
+       <div className="flex items-center gap-2 text-green-400 font-bold mb-3 border-b border-green-500/10 pb-2">
+          <Terminal size={12} /> <span>AMNEX_VTS_STREAM</span>
+          <span className="ml-auto text-text-dim animate-pulse">● LIVE</span>
        </div>
+       {logs.length === 0 && (
+         <p className="text-text-dim opacity-40 italic">Awaiting telemetry packets...</p>
+       )}
        {logs.map((log, i) => (
          <div key={i} className="flex gap-2">
-            <span className="text-text-dim opacity-30">[{new Date().toLocaleTimeString()}]</span>
-            <span className={log.includes('ERR') ? 'text-accent' : log.includes('OK') ? 'text-green-400' : 'text-text-dim'}>
+            <span className="text-text-dim opacity-25 shrink-0">[{new Date().toLocaleTimeString()}]</span>
+            <span className={`break-all ${
+              log.includes('ERR') ? 'text-red-400' : 
+              log.includes('OK') || log.includes('✓') ? 'text-green-400' : 
+              log.includes('WARN') ? 'text-yellow-400' :
+              'text-slate-400'
+            }`}>
               {log}
             </span>
          </div>
        ))}
+       <div ref={bottomRef} />
     </div>
   );
 };
+
+const TICKER_ITEMS = [
+  'GJ18ZT1831 — JUNAGADH → RAJKOT — ON TIME',
+  'GJ06BT5047 — AHMEDABAD → SURAT — DELAYED 12 MIN',
+  'GJ01ZA2291 — VADODARA → ANAND — ON TIME',
+  'FLEET STATUS: 4,281 BUSES ONLINE — NETWORK OPTIMAL',
+  'GJ18ZT1832 — PORBANDAR → JUNAGADH — DEPARTED',
+  'GJ05GH2201 — GANDHINAGAR → MEHSANA — ON TIME',
+  'NEW ROUTE: BHAVNAGAR → PALITANA — BOOKING OPEN',
+  'GJ21XY8811 — SURAT → NAVSARI — APPROACHING STATION',
+];
+
+const TickerBar: React.FC = () => (
+  <div className="glass border-y border-white/5 py-2 overflow-hidden relative">
+    <div className="flex items-center">
+      <div className="shrink-0 px-4 py-0.5 bg-primary text-white text-[9px] font-black tracking-[0.2em] uppercase z-10 mr-4 rounded-r-full">
+        LIVE
+      </div>
+      <div className="ticker-wrap flex-1">
+        <div className="ticker-inner animate-ticker">
+          {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
+            <span key={i} className="text-[10px] font-bold text-text-muted uppercase tracking-wider">
+              {item} <span className="text-primary mx-6">◆</span>
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 
 const GSRTCNexus: React.FC = () => {
   // Slug-based routing: read ?tab= and ?track= from URL on mount
@@ -322,7 +368,12 @@ const GSRTCNexus: React.FC = () => {
         </div>
       </header>
 
-      <main className="pt-32 px-6 max-w-7xl mx-auto">
+      {/* Live Ticker Bar — below fixed header */}
+      <div className="fixed top-[72px] w-full z-40">
+        <TickerBar />
+      </div>
+
+      <main className="pt-36 px-4 md:px-6 max-w-7xl mx-auto">
         <AnimatePresence mode="wait">
           {activeTab === 'dashboard' ? (
              <motion.div
