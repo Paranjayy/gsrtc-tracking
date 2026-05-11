@@ -11,17 +11,21 @@ import {
   Grid,
   List as ListIcon,
   ChevronRight,
-  Map as MapIcon,
   Activity,
   History,
-  Navigation2,
   Share2,
   AlertCircle,
   Calendar,
   Zap,
-  Locate
+  Locate,
+  Star,
+  Cpu,
+  Gauge,
+  Terminal,
+  RefreshCw,
+  SearchCode
 } from 'lucide-react';
-import { MOCK_TRIPS } from '../services/mockData';
+import { MOCK_TRIPS, STATIONS } from '../services/mockData';
 import { GSRTCService } from '../services/gsrtc';
 import type { BusTrip, TrackingInfo } from '../types';
 
@@ -61,6 +65,71 @@ const MagicDatePicker: React.FC<{ selectedDate: string; onChange: (date: string)
   );
 };
 
+const StationAutocomplete: React.FC<{ value: string; onChange: (val: string) => void; label: string }> = ({ value, onChange, label }) => {
+  const [show, setShow] = useState(false);
+  const filtered = useMemo(() => 
+    STATIONS.filter(s => s.toLowerCase().includes(value.toLowerCase()) && s !== value).slice(0, 5),
+    [value]
+  );
+
+  return (
+    <div className="relative flex-1">
+      <div className="glass-light px-6 py-4 rounded-3xl flex flex-col justify-center border border-transparent hover:border-primary/20 transition-all group">
+        <span className="text-[10px] text-primary font-bold uppercase tracking-widest mb-1 group-hover:translate-x-1 transition-transform">{label}</span>
+        <div className="flex items-center gap-3">
+          {label === 'Origin' ? <Locate size={18} className="text-text-dim" /> : <MapPin size={18} className="text-text-dim" />}
+          <input 
+            className="bg-transparent w-full text-xl font-bold outline-none" 
+            value={value}
+            onChange={(e) => { onChange(e.target.value); setShow(true); }}
+            onFocus={() => setShow(true)}
+            onBlur={() => setTimeout(() => setShow(false), 200)}
+          />
+        </div>
+      </div>
+      <AnimatePresence>
+        {show && filtered.length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="absolute top-full left-0 w-full mt-2 glass p-2 rounded-2xl z-[60] border border-white/10 shadow-2xl"
+          >
+            {filtered.map(s => (
+              <button
+                key={s}
+                onClick={() => { onChange(s); setShow(false); }}
+                className="w-full text-left px-4 py-3 rounded-xl hover:bg-primary/10 text-sm font-bold transition-all flex items-center justify-between group"
+              >
+                {s}
+                <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+const TerminalFeed: React.FC<{ logs: string[] }> = ({ logs }) => {
+  return (
+    <div className="bg-black/40 rounded-2xl p-4 font-mono text-[10px] h-32 overflow-y-auto border border-white/5 space-y-1 no-scrollbar">
+       <div className="flex items-center gap-2 text-primary font-bold mb-2">
+          <Terminal size={12} /> TELEMETRY_STREAM_VTS_LATEST
+       </div>
+       {logs.map((log, i) => (
+         <div key={i} className="flex gap-2">
+            <span className="text-text-dim opacity-30">[{new Date().toLocaleTimeString()}]</span>
+            <span className={log.includes('ERR') ? 'text-accent' : log.includes('OK') ? 'text-green-400' : 'text-text-dim'}>
+              {log}
+            </span>
+         </div>
+       ))}
+    </div>
+  );
+};
+
 const GSRTCNexus: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'tracking' | 'booking'>('booking');
   const [searchQuery, setSearchQuery] = useState('');
@@ -71,6 +140,29 @@ const GSRTCNexus: React.FC = () => {
   const [trackingData, setTrackingData] = useState<TrackingInfo | null>(null);
   const [isLive, setIsLive] = useState(false);
   const [travelDate, setTravelDate] = useState('2026-05-14');
+  const [logs, setLogs] = useState<string[]>(['SYS: Booting VTS Engine...', 'SYS: Handshaking with Amnex...', 'SYS: OK']);
+  const [isScanning, setIsScanning] = useState(false);
+  const [favorites, setFavorites] = useState<string[]>(() => JSON.parse(localStorage.getItem('nexus_favs') || '[]'));
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => JSON.parse(localStorage.getItem('nexus_recent') || '[]'));
+  const [origin, setOrigin] = useState('Junagadh Busport');
+  const [destination, setDestination] = useState('Rajkot Busport');
+
+  useEffect(() => {
+    localStorage.setItem('nexus_favs', JSON.stringify(favorites));
+  }, [favorites]);
+
+  useEffect(() => {
+    localStorage.setItem('nexus_recent', JSON.stringify(recentSearches));
+  }, [recentSearches]);
+
+  const toggleFavorite = (id: string) => {
+    setFavorites(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
+  };
+
+  const addRecent = (id: string) => {
+    if (!id || id.length < 6) return;
+    setRecentSearches(prev => [id, ...prev.filter(p => p !== id)].slice(0, 5));
+  };
 
   // Deep linking for tracking
   useEffect(() => {
@@ -88,6 +180,7 @@ const GSRTCNexus: React.FC = () => {
       setIsLive(true);
       const stop = GSRTCService.startVirtualSocket(searchQuery, (data) => {
         setTrackingData(data);
+        setLogs(prev => [`VTS: Lat ${data.lat} Lng ${data.lng} Speed ${data.speed} OK`, ...prev].slice(0, 20));
       });
       return () => {
         stop();
@@ -97,6 +190,18 @@ const GSRTCNexus: React.FC = () => {
       setTrackingData(null);
     }
   }, [activeTab, searchQuery]);
+
+  const handleManualScan = async () => {
+    if (!searchQuery) return;
+    setIsScanning(true);
+    setLogs(prev => ['SYS: Manual Deep Scan Triggered...', ...prev]);
+    const data = await GSRTCService.trackVehicle(searchQuery);
+    if (data) {
+      setTrackingData(data);
+      setLogs(prev => ['SYS: Scan Complete. High Fidelity Mapping Updated.', ...prev]);
+    }
+    setTimeout(() => setIsScanning(false), 2000);
+  };
 
   const formatVehicleNo = (val: string) => {
     const clean = val.replace(/[^A-Z0-9]/gi, '').toUpperCase();
@@ -213,26 +318,17 @@ const GSRTCNexus: React.FC = () => {
                 </div>
 
                 <div className="glass p-2 rounded-[2rem] border border-white/5 flex flex-col md:flex-row items-stretch gap-2">
-                  <div className="flex-1 flex flex-col md:flex-row gap-2">
-                    <div className="flex-1 glass-light px-6 py-4 rounded-3xl flex flex-col justify-center border border-transparent hover:border-primary/20 transition-all group">
-                      <span className="text-[10px] text-primary font-bold uppercase tracking-widest mb-1 group-hover:translate-x-1 transition-transform">Origin</span>
-                      <div className="flex items-center gap-3">
-                        <Locate size={18} className="text-text-dim" />
-                        <input className="bg-transparent w-full text-xl font-bold outline-none" defaultValue="Junagadh Busport" />
-                      </div>
-                    </div>
+                  <div className="flex-1 flex flex-col md:flex-row gap-2 relative">
+                    <StationAutocomplete value={origin} onChange={setOrigin} label="Origin" />
                     
-                    <div className="w-12 h-12 self-center bg-white/5 rounded-full flex items-center justify-center rotate-90 md:rotate-0 text-text-dim hover:text-primary transition-colors cursor-pointer">
+                    <div 
+                      onClick={() => { const tmp = origin; setOrigin(destination); setDestination(tmp); }}
+                      className="w-12 h-12 self-center bg-white/5 rounded-full flex items-center justify-center rotate-90 md:rotate-0 text-text-dim hover:text-primary transition-all cursor-pointer z-10"
+                    >
                        <ArrowRight size={20} />
                     </div>
 
-                    <div className="flex-1 glass-light px-6 py-4 rounded-3xl flex flex-col justify-center border border-transparent hover:border-primary/20 transition-all group">
-                      <span className="text-[10px] text-primary font-bold uppercase tracking-widest mb-1 group-hover:translate-x-1 transition-transform">Destination</span>
-                      <div className="flex items-center gap-3">
-                        <MapPin size={18} className="text-text-dim" />
-                        <input className="bg-transparent w-full text-xl font-bold outline-none" defaultValue="Rajkot Busport" />
-                      </div>
-                    </div>
+                    <StationAutocomplete value={destination} onChange={setDestination} label="Destination" />
                   </div>
 
                   <button className="primary-button md:w-48 rounded-[1.5rem] flex items-center justify-center gap-3 text-xl font-bold py-6">
@@ -428,25 +524,69 @@ const GSRTCNexus: React.FC = () => {
               <div className="p-6 border-b border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-primary/20 rounded-xl">
-                    <MapIcon size={24} className="text-primary" />
+                    <Cpu size={24} className="text-primary" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold">Real-time Tracking</h2>
-                    <p className="text-sm text-text-dim">Fleet intelligence & telemetry dashboard</p>
+                    <h2 className="text-xl font-bold">Forensic Telemetry</h2>
+                    <p className="text-sm text-text-dim">Real-time VTS & Fleet Intelligence</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 w-full md:w-96">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" size={18} />
+                <div className="flex items-center gap-3 w-full md:w-[32rem]">
+                  <div className="relative flex-1 group">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-dim group-focus-within:text-primary transition-colors" size={18} />
                     <input 
-                      placeholder="Enter Vehicle Number (e.g. GJ-18-ZT-1831)" 
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm focus:border-primary transition-all"
+                      placeholder="Enter Vehicle Number..." 
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold focus:border-primary transition-all shadow-inner"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && addRecent(searchQuery)}
                     />
                   </div>
+                  {searchQuery && (
+                    <button 
+                      onClick={() => toggleFavorite(searchQuery)}
+                      className={`p-4 rounded-2xl border transition-all ${
+                        favorites.includes(searchQuery) ? 'bg-primary/20 border-primary text-primary' : 'bg-white/5 border-white/10 text-text-dim'
+                      }`}
+                    >
+                      <Star size={20} fill={favorites.includes(searchQuery) ? 'currentColor' : 'none'} />
+                    </button>
+                  )}
                 </div>
+              </div>
+
+              {/* Recent & Favs Bar */}
+              <div className="px-6 py-3 border-b border-white/5 flex items-center gap-6 overflow-x-auto no-scrollbar">
+                <div className="flex items-center gap-2 text-[10px] font-black text-text-dim uppercase tracking-widest whitespace-nowrap">
+                   <History size={12} /> Recent
+                </div>
+                {recentSearches.map(id => (
+                  <button 
+                    key={id}
+                    onClick={() => setSearchQuery(id)}
+                    className="px-3 py-1.5 rounded-full bg-white/5 border border-white/5 text-xs font-bold hover:border-primary/40 transition-all"
+                  >
+                    {id}
+                  </button>
+                ))}
+                {favorites.length > 0 && (
+                  <>
+                    <div className="h-4 w-px bg-white/10" />
+                    <div className="flex items-center gap-2 text-[10px] font-black text-primary uppercase tracking-widest whitespace-nowrap">
+                       <Star size={12} /> Favorites
+                    </div>
+                    {favorites.map(id => (
+                      <button 
+                        key={id}
+                        onClick={() => setSearchQuery(id)}
+                        className="px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-bold text-primary hover:bg-primary/20 transition-all"
+                      >
+                        {id}
+                      </button>
+                    ))}
+                  </>
+                )}
               </div>
 
               <div className="flex-1 relative bg-[#05070a] flex flex-col md:flex-row p-6 gap-6 overflow-y-auto">
@@ -502,21 +642,45 @@ const GSRTCNexus: React.FC = () => {
                           </div>
                         </section>
 
-                        <section className="glass p-6 rounded-2xl border border-white/5 flex flex-col justify-between">
-                          <h3 className="text-sm font-bold uppercase tracking-widest text-text-dim flex items-center gap-2 mb-4">
-                            <Navigation2 size={14} className="text-primary" /> Live Location
-                          </h3>
-                          <div className="flex-1 bg-white/5 rounded-xl flex items-center justify-center relative overflow-hidden group">
-                             <div className="absolute inset-0 opacity-20 bg-[url('https://tile.openstreetmap.org/12/2873/1778.png')] bg-cover" />
-                             <div className="relative z-10 flex flex-col items-center gap-2">
-                                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/50">
-                                   <Bus size={18} className="text-white" />
-                                </div>
-                                <div className="glass px-3 py-1 rounded-full text-[10px] font-bold border border-primary/30">
-                                  {trackingData.speed} KM/H
-                                </div>
-                             </div>
-                          </div>
+                        <section className="glass p-6 rounded-2xl border border-white/5 flex flex-col items-center justify-center relative overflow-hidden">
+                           <div className="absolute top-4 left-6">
+                             <h3 className="text-sm font-bold uppercase tracking-widest text-text-dim flex items-center gap-2">
+                               <Gauge size={14} className="text-primary" /> Velocity
+                             </h3>
+                           </div>
+                           
+                           {/* Forensic Speedometer */}
+                           <div className="relative w-48 h-48 flex items-center justify-center mt-4">
+                              <svg className="w-full h-full -rotate-90">
+                                 <circle cx="96" cy="96" r="80" className="stroke-white/5" strokeWidth="12" fill="none" />
+                                 <motion.circle 
+                                   cx="96" cy="96" r="80" 
+                                   className="stroke-primary" 
+                                   strokeWidth="12" 
+                                   fill="none"
+                                   strokeDasharray="502.4"
+                                   initial={{ strokeDashoffset: 502.4 }}
+                                   animate={{ strokeDashoffset: 502.4 - (502.4 * (trackingData.speed / 120)) }}
+                                   strokeLinecap="round"
+                                 />
+                              </svg>
+                              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                 <p className="text-5xl font-black tracking-tighter">{trackingData.speed}</p>
+                                 <p className="text-[10px] font-black text-text-dim uppercase tracking-widest">KM/H</p>
+                              </div>
+                           </div>
+                           
+                           <div className="mt-4 flex items-center gap-8 w-full border-t border-white/5 pt-4">
+                              <div className="text-center flex-1">
+                                 <p className="text-[10px] font-bold text-text-dim uppercase">Heading</p>
+                                 <p className="text-sm font-black">{trackingData.direction}</p>
+                              </div>
+                              <div className="w-px h-8 bg-white/5" />
+                              <div className="text-center flex-1">
+                                 <p className="text-[10px] font-bold text-text-dim uppercase">Altitude</p>
+                                 <p className="text-sm font-black">24m</p>
+                              </div>
+                           </div>
                         </section>
                       </div>
 
@@ -528,38 +692,47 @@ const GSRTCNexus: React.FC = () => {
                            <button className="text-[10px] font-bold text-primary hover:underline">VIEW FULL LOG</button>
                         </div>
                         
-                        <div className="space-y-4">
-                          {trackingData.events?.map((event, i) => (
-                            <div key={i} className="flex items-start gap-4 relative group">
-                              <div className="mt-1 w-2 h-2 rounded-full bg-primary relative z-10" />
-                              {i !== trackingData.events!.length - 1 && (
-                                <div className="absolute left-[3px] top-4 bottom-[-16px] w-[2px] bg-white/5" />
-                              )}
-                              <div className="flex-1">
-                                <div className="flex items-center justify-between">
-                                  <p className="text-sm font-bold">{event.type}</p>
-                                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                                    event.status === 'On time' ? 'bg-primary/20 text-primary' : 'bg-white/10 text-text-muted'
-                                  }`}>
-                                    {event.status}
-                                  </span>
-                                </div>
-                                <p className="text-xs text-text-dim">{event.location} — {event.time}</p>
-                              </div>
-                            </div>
-                          ))}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                           <div className="space-y-4">
+                             {trackingData.events?.map((event, i) => (
+                               <div key={i} className="flex items-start gap-4 relative group">
+                                 <div className="mt-1 w-2 h-2 rounded-full bg-primary relative z-10" />
+                                 {i !== trackingData.events!.length - 1 && (
+                                   <div className="absolute left-[3px] top-4 bottom-[-16px] w-[2px] bg-white/5" />
+                                 )}
+                                 <div className="flex-1">
+                                   <div className="flex items-center justify-between">
+                                     <p className="text-sm font-bold">{event.type}</p>
+                                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                                       event.status === 'On time' ? 'bg-primary/20 text-primary' : 'bg-white/10 text-text-muted'
+                                     }`}>
+                                       {event.status}
+                                     </span>
+                                   </div>
+                                   <p className="text-xs text-text-dim">{event.location} — {event.time}</p>
+                                 </div>
+                               </div>
+                             ))}
+                           </div>
+                           <TerminalFeed logs={logs} />
                         </div>
                       </section>
                     </div>
 
                     <div className="w-full md:w-80 space-y-4">
                        <div className="glass p-6 rounded-2xl border border-white/5 space-y-4">
-                          <h4 className="text-sm font-bold uppercase tracking-widest text-text-dim">Tracking Controls</h4>
-                          <button onClick={handleShare} className="w-full primary-button py-3 text-sm flex items-center justify-center gap-2">
-                            <Share2 size={16} /> Share Tracking
+                          <h4 className="text-sm font-bold uppercase tracking-widest text-text-dim flex items-center justify-between">
+                             <span>Tracking Controls</span>
+                             {isScanning && <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}><RefreshCw size={12} className="text-primary" /></motion.div>}
+                          </h4>
+                          <button onClick={handleManualScan} disabled={isScanning} className="w-full bg-primary/10 border border-primary/20 text-primary py-3 rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2 hover:bg-primary/20">
+                             {isScanning ? 'SCANNING...' : 'TRIGGER DEEP SCAN'} <SearchCode size={16} />
+                          </button>
+                          <button onClick={handleShare} className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2">
+                            <Share2 size={16} /> Share Intelligence
                           </button>
                           <button className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2">
-                            <AlertCircle size={16} className="text-accent" /> Report Issue
+                            <AlertCircle size={16} className="text-accent" /> Report Discrepancy
                           </button>
                        </div>
 

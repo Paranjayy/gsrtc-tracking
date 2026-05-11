@@ -67,3 +67,26 @@ export const MOCK_TRIPS: BusTrip[] = [
     route: ['Junagadh', 'Jetpur', 'Rajkot']
   }
 ];
+
+export const STATIONS = [
+  'Junagadh Busport',
+  'Rajkot Busport',
+  'Ahmedabad Central',
+  'Baroda (Vadodara)',
+  'Surat Central',
+  'Bhavnagar',
+  'Jamnagar',
+  'Gandhinagar',
+  'Anand',
+  'Nadiad',
+  'Mehsana',
+  'Bhuj',
+  'Somnath',
+  'Dwarka',
+  'Amreli',
+  'Patan',
+  'Palanpur',
+  'Valsad',
+  'Vapi',
+  'Bharuch'
+];
