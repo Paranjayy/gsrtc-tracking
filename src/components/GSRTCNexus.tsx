@@ -188,7 +188,7 @@ const GSRTCNexus: React.FC = () => {
     return 'dashboard';
   });
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'fare' | 'time' | 'seats'>('time');
   const [filterType, setFilterType] = useState<string>('ALL');
   const [filterSource, setFilterSource] = useState<'ALL' | 'GSRTC' | 'REDBUS'>('ALL');
@@ -199,6 +199,7 @@ const GSRTCNexus: React.FC = () => {
   const [logs, setLogs] = useState<string[]>(['SYS: Booting VTS Engine...', 'SYS: Handshaking with Amnex...', 'SYS: OK']);
   const [isScanning, setIsScanning] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   const [favorites, setFavorites] = useState<string[]>(() => JSON.parse(localStorage.getItem('nexus_favs') || '[]'));
   const [recentSearches, setRecentSearches] = useState<string[]>(() => JSON.parse(localStorage.getItem('nexus_recent') || '[]'));
   const [origin, setOrigin] = useState('Junagadh Busport');
@@ -326,6 +327,104 @@ const GSRTCNexus: React.FC = () => {
   }, [processedTrips, groupBy]);
 
   const busTypes = ['ALL', ...new Set(MOCK_TRIPS.map(t => t.busType))];
+  const routePresets = [
+    { label: 'Junagadh to Rajkot', origin: 'Junagadh Busport', destination: 'Rajkot Busport' },
+    { label: 'Ahmedabad to Surat', origin: 'Ahmedabad Central', destination: 'Surat Central' },
+    { label: 'Bhavnagar to Palitana', origin: 'Bhavnagar', destination: 'Somnath' },
+    { label: 'Gandhinagar to Mehsana', origin: 'Gandhinagar', destination: 'Mehsana' },
+  ];
+  const sourceCounts = useMemo(() => ({
+    GSRTC: processedTrips.filter((trip) => trip.source === 'GSRTC').length,
+    REDBUS: processedTrips.filter((trip) => trip.source === 'REDBUS').length,
+  }), [processedTrips]);
+
+  const FiltersPanel = (
+    <div className="stat-card space-y-4 p-5">
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold flex items-center gap-2">
+          <Filter size={16} /> Filters
+        </h3>
+        <button className="text-xs text-primary hover:underline" onClick={() => {
+          setFilterType('ALL');
+          setFilterSource('ALL');
+          setSortBy('time');
+          setGroupBy('none');
+        }}>
+          Reset
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        <label className="section-title block">Bus type</label>
+        <div className="flex flex-wrap gap-2">
+          {busTypes.map(type => (
+            <button
+              key={type}
+              onClick={() => setFilterType(type)}
+              className={`px-3 py-1.5 text-xs font-semibold border transition-all soft-chip ${
+                filterType === type 
+                ? 'soft-chip-active' 
+                : 'hover:border-white/18'
+              }`}
+            >
+              {type}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <label className="section-title block">Source</label>
+        <div className="flex gap-2">
+          {['ALL', 'GSRTC', 'REDBUS'].map(src => (
+            <button
+              key={src}
+              onClick={() => setFilterSource(src as any)}
+              className={`flex-1 py-2 text-[10px] font-black border transition-all soft-chip ${
+                filterSource === src ? 'soft-chip-active' : ''
+              }`}
+            >
+              {src}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <label className="section-title block">Sort by</label>
+        <select 
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as any)}
+          className="w-full soft-field p-3 text-sm text-text-main outline-none"
+        >
+          <option value="time">Departure Time</option>
+          <option value="fare">Lowest Fare</option>
+          <option value="seats">Most Seats</option>
+        </select>
+      </div>
+      <div className="space-y-3 border-t border-white/5 pt-5">
+        <label className="section-title block">Group by</label>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setGroupBy('none')}
+            className={`flex-1 py-2 text-xs font-semibold border transition-all soft-chip ${
+              groupBy === 'none' ? 'soft-chip-active' : ''
+            }`}
+          >
+            None
+          </button>
+          <button
+            onClick={() => setGroupBy('type')}
+            className={`flex-1 py-2 text-xs font-semibold border transition-all soft-chip ${
+              groupBy === 'type' ? 'soft-chip-active' : ''
+            }`}
+          >
+            Bus Type
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen pb-20">
@@ -373,7 +472,7 @@ const GSRTCNexus: React.FC = () => {
         <TickerBar />
       </div>
 
-      <main className="pt-36 px-4 md:px-6 max-w-[1440px] mx-auto">
+      <main className="pt-40 px-4 md:px-6 max-w-[1440px] mx-auto">
         <AnimatePresence mode="wait">
           {activeTab === 'dashboard' ? (
              <motion.div
@@ -488,6 +587,25 @@ const GSRTCNexus: React.FC = () => {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+                  {routePresets.map((preset) => (
+                    <button
+                      key={preset.label}
+                      onClick={() => {
+                        setOrigin(preset.origin);
+                        setDestination(preset.destination);
+                        setActiveTab('booking');
+                      }}
+                      className="text-left stat-card p-4 rounded-[1.35rem] hover:border-primary/20 transition-all group"
+                    >
+                      <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Quick route</p>
+                      <p className="text-sm md:text-base font-black tracking-tight group-hover:text-primary transition-colors">
+                        {preset.label}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+
                 <div className="p-2 rounded-[2rem] glass-panel flex flex-col md:flex-row items-stretch gap-2">
                   <div className="flex-1 flex flex-col md:flex-row gap-2 relative">
                     <StationAutocomplete value={origin} onChange={setOrigin} label="Origin" />
@@ -550,91 +668,19 @@ const GSRTCNexus: React.FC = () => {
               {/* Filters & Results */}
               <div className="flex flex-col md:flex-row gap-8">
                 {/* Sidebar Filters */}
-                <aside className="w-full md:w-72 space-y-6">
-                  <div className="stat-card space-y-5">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold flex items-center gap-2">
-                        <Filter size={16} /> Filters
-                      </h3>
-                      <button className="text-xs text-primary hover:underline">Reset</button>
-                    </div>
-
-                    <div className="space-y-3">
-                      <label className="section-title block">Bus type</label>
-                      <div className="flex flex-wrap gap-2">
-                        {busTypes.map(type => (
-                          <button
-                            key={type}
-                            onClick={() => setFilterType(type)}
-                            className={`px-3 py-1.5 text-xs font-semibold border transition-all soft-chip ${
-                              filterType === type 
-                              ? 'soft-chip-active' 
-                              : 'hover:border-white/18'
-                            }`}
-                          >
-                            {type}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <label className="section-title block">Source</label>
-                      <div className="flex gap-2">
-                        {['ALL', 'GSRTC', 'REDBUS'].map(src => (
-                          <button
-                            key={src}
-                            onClick={() => setFilterSource(src as any)}
-                            className={`flex-1 py-2 text-[10px] font-black border transition-all soft-chip ${
-                              filterSource === src ? 'soft-chip-active' : ''
-                            }`}
-                          >
-                            {src}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <label className="section-title block">Sort by</label>
-                      <select 
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value as any)}
-                        className="w-full soft-field p-3 text-sm text-text-main outline-none"
-                      >
-                        <option value="time">Departure Time</option>
-                        <option value="fare">Lowest Fare</option>
-                        <option value="seats">Most Seats</option>
-                      </select>
-                    </div>
-                    <div className="space-y-3 border-t border-white/5 pt-5">
-                      <label className="section-title block">Group by</label>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setGroupBy('none')}
-                          className={`flex-1 py-2 text-xs font-semibold border transition-all soft-chip ${
-                            groupBy === 'none' ? 'soft-chip-active' : ''
-                          }`}
-                        >
-                          None
-                        </button>
-                        <button
-                          onClick={() => setGroupBy('type')}
-                          className={`flex-1 py-2 text-xs font-semibold border transition-all soft-chip ${
-                            groupBy === 'type' ? 'soft-chip-active' : ''
-                          }`}
-                        >
-                          Bus Type
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                <aside className="hidden md:block w-full md:w-64 space-y-6">
+                  {FiltersPanel}
                 </aside>
 
                 {/* Results List */}
-                <div className="flex-1 space-y-4">
+                <div className="flex-1 space-y-4 min-w-0">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-text-muted text-sm">Showing {processedTrips.length} results</p>
+                    <div>
+                      <p className="text-text-muted text-sm">Showing {processedTrips.length} results</p>
+                      <p className="text-[10px] text-text-dim uppercase tracking-[0.18em] mt-1">
+                        {sourceCounts.GSRTC} GSRTC • {sourceCounts.REDBUS} Redbus
+                      </p>
+                    </div>
                     <div className="flex items-center gap-2 glass-light p-1 rounded-full">
                       <button 
                         onClick={() => setViewMode('list')}
@@ -651,7 +697,32 @@ const GSRTCNexus: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className={viewMode === 'grid' ? 'grid grid-cols-1 xl:grid-cols-2 gap-4' : 'space-y-5'}>
+                  <div className="md:hidden flex items-center justify-between gap-3">
+                    <button
+                      onClick={() => setIsMobileFiltersOpen(prev => !prev)}
+                      className="soft-chip px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em]"
+                    >
+                      {isMobileFiltersOpen ? 'Hide filters' : 'Show filters'}
+                    </button>
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-text-dim">
+                      {groupBy === 'none' ? 'Ungrouped' : 'Grouped by bus type'}
+                    </p>
+                  </div>
+
+                  <AnimatePresence>
+                    {isMobileFiltersOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="md:hidden"
+                      >
+                        {FiltersPanel}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <div className={viewMode === 'grid' ? 'grid grid-cols-1 2xl:grid-cols-2 gap-4' : 'space-y-4'}>
                     {Object.entries(groupedTrips).map(([group, trips]) => (
                       <div key={group} className={viewMode === 'list' ? 'space-y-4' : 'contents'}>
                         {groupBy !== 'none' && (
@@ -663,55 +734,55 @@ const GSRTCNexus: React.FC = () => {
                           <motion.div
                             layout
                             key={trip.id}
-                            className={`glass-card p-6 md:p-7 rounded-[2rem] group border border-white/5 hover:border-primary/24 overflow-hidden relative ${
-                              viewMode === 'list' ? 'flex flex-col gap-6' : 'flex flex-col'
+                            className={`glass-card p-5 md:p-6 rounded-[1.6rem] group border border-white/5 hover:border-primary/24 overflow-hidden relative ${
+                              viewMode === 'list' ? 'flex flex-col gap-5' : 'flex flex-col'
                             }`}
                           >
                             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[100px] -mr-32 -mt-32 pointer-events-none" />
-                            <div className="flex-1 grid gap-6 xl:grid-cols-[1.2fr,0.8fr] items-stretch">
-                              <div className="space-y-5">
-                                <div className="flex flex-wrap items-center gap-3">
+                            <div className="flex-1 grid gap-5 xl:grid-cols-[1.4fr,0.6fr] items-start">
+                              <div className="space-y-4 min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
                                   <span className="text-[10px] font-black text-primary uppercase tracking-[0.22em]">{trip.busType}</span>
-                                  <span className="text-xs font-semibold text-text-dim tracking-[0.18em] uppercase">{trip.busNumber}</span>
+                                  <span className="text-[10px] md:text-xs font-semibold text-text-dim tracking-[0.18em] uppercase">{trip.busNumber}</span>
                                   <span className={`text-[10px] font-black px-3 py-1 rounded-full border ${
                                     trip.source === 'REDBUS' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' : 'bg-green-500/10 border-green-500/20 text-green-400'
                                   }`}>
                                     {trip.source === 'REDBUS' ? 'Indexed via Redbus' : 'GSRTC direct'}
                                   </span>
-                                  <span className="ml-auto flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/5">
+                                  <span className="ml-auto flex items-center gap-2 px-2.5 py-1 bg-white/5 rounded-full border border-white/5">
                                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                     <span className="text-[10px] font-black text-green-400 uppercase tracking-[0.2em]">Live</span>
+                                     <span className="text-[10px] font-black text-green-400 uppercase tracking-[0.18em]">Live</span>
                                   </span>
                                 </div>
-                                
-                                <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-4 items-center">
-                                  <div className="soft-field p-5 md:p-6 text-left">
-                                    <p className="text-4xl md:text-5xl font-black tracking-tight leading-none text-editorial">{trip.departureTime}</p>
-                                    <p className="text-[10px] font-semibold text-text-dim mt-3 uppercase tracking-[0.2em]">{trip.origin}</p>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 items-center">
+                                  <div className="soft-field px-4 py-4 text-left min-w-0">
+                                    <p className="text-3xl md:text-[2.65rem] font-black tracking-tight leading-none text-editorial">{trip.departureTime}</p>
+                                    <p className="text-[10px] font-semibold text-text-dim mt-2 uppercase tracking-[0.18em] truncate">{trip.origin}</p>
                                   </div>
 
-                                  <div className="flex flex-col items-center justify-center px-2">
-                                    <div className="px-4 py-1 rounded-full glass-panel border border-primary/20">
-                                       <span className="text-[10px] font-black text-primary uppercase tracking-[0.28em]">Direct</span>
+                                  <div className="flex flex-col items-center justify-center px-1">
+                                    <div className="px-3 py-1 rounded-full glass-panel border border-primary/20">
+                                       <span className="text-[10px] font-black text-primary uppercase tracking-[0.24em]">Direct</span>
                                     </div>
-                                    <div className="my-3 flex items-center gap-2">
+                                    <div className="my-2.5 flex items-center gap-2">
                                        <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_10px_rgba(59,130,246,0.65)]" />
-                                       <div className="w-24 md:w-28 h-px bg-gradient-to-r from-primary/90 via-primary/35 to-transparent" />
+                                       <div className="w-14 md:w-20 h-px bg-gradient-to-r from-primary/90 via-primary/35 to-transparent" />
                                     </div>
-                                    <span className="text-[11px] font-black text-text-dim uppercase tracking-[0.26em]">{trip.duration}</span>
+                                    <span className="text-[10px] font-black text-text-dim uppercase tracking-[0.22em]">{trip.duration}</span>
                                   </div>
 
-                                  <div className="soft-field p-5 md:p-6 text-right">
-                                    <p className="text-4xl md:text-5xl font-black tracking-tight leading-none text-editorial">{trip.arrivalTime}</p>
-                                    <p className="text-[10px] font-semibold text-text-dim mt-3 uppercase tracking-[0.2em]">{trip.destination}</p>
+                                  <div className="soft-field px-4 py-4 text-right min-w-0">
+                                    <p className="text-3xl md:text-[2.65rem] font-black tracking-tight leading-none text-editorial">{trip.arrivalTime}</p>
+                                    <p className="text-[10px] font-semibold text-text-dim mt-2 uppercase tracking-[0.18em] truncate">{trip.destination}</p>
                                   </div>
                                 </div>
                               </div>
 
-                              <div className={`flex flex-col justify-between gap-5 ${viewMode === 'list' ? 'xl:border-l xl:border-white/10 xl:pl-6' : 'pt-2'}`}>
-                                <div className="space-y-2 xl:text-right">
+                              <div className={`flex flex-col justify-between gap-3 ${viewMode === 'list' ? 'xl:border-l xl:border-white/10 xl:pl-5' : 'pt-1'}`}>
+                                <div className="space-y-1 xl:text-right">
                                   <p className="section-title">Operational fare</p>
-                                  <p className="text-5xl md:text-6xl font-black text-white tracking-tight leading-none text-editorial">₹{trip.fare}</p>
+                                  <p className="text-4xl md:text-[2.9rem] font-black text-white tracking-tight leading-none text-editorial">₹{trip.fare}</p>
                                   <div className="flex items-center xl:justify-end gap-2 mt-2">
                                      <div className={`w-1.5 h-1.5 rounded-full ${trip.seatsAvailable < 10 ? 'bg-accent' : 'bg-primary'}`} />
                                      <p className={`text-[10px] font-black tracking-[0.18em] uppercase ${trip.seatsAvailable < 10 ? 'text-accent' : 'text-primary'}`}>
@@ -719,22 +790,22 @@ const GSRTCNexus: React.FC = () => {
                                      </p>
                                   </div>
                                 </div>
-                                <div className="space-y-3">
+                                <div className="grid grid-cols-1 gap-2">
                                   <button 
-                                    className="primary-button w-full h-14 rounded-[1.25rem] flex items-center justify-center gap-4 text-sm"
+                                    className="primary-button w-full h-11 rounded-[0.95rem] flex items-center justify-center gap-3 text-[11px]"
                                     onClick={() => window.open(trip.source === 'REDBUS' ? 'https://www.redbus.in/' : 'https://gsrtc.in/site/', '_blank')}
                                   >
-                                    Select seat <ArrowRight size={18} />
+                                    Select seat <ArrowRight size={15} />
                                   </button>
                                   <button 
-                                    className="w-full h-12 glass-panel hover:bg-white/8 rounded-[1.25rem] flex items-center justify-center gap-3 transition-all font-semibold text-[10px] uppercase tracking-[0.22em] text-text-dim hover:text-white group/track"
+                                    className="w-full h-9 glass-panel hover:bg-white/8 rounded-[0.95rem] flex items-center justify-center gap-2 transition-all font-semibold text-[10px] uppercase tracking-[0.18em] text-text-dim hover:text-white group/track"
                                     onClick={() => {
                                       setSearchQuery(trip.busNumber);
                                       setActiveTab('tracking');
                                       handleManualScan();
                                     }}
                                   >
-                                    <Activity size={16} className="text-primary group-hover/track:animate-pulse" /> Track telemetry
+                                    <Activity size={13} className="text-primary group-hover/track:animate-pulse" /> Track telemetry
                                   </button>
                                 </div>
                               </div>
