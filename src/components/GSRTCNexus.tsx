@@ -472,7 +472,7 @@ const GSRTCNexus: React.FC = () => {
         <TickerBar />
       </div>
 
-      <main className="pt-40 px-4 md:px-6 max-w-[1440px] mx-auto">
+      <main className="pt-48 md:pt-52 px-4 md:px-6 max-w-[1440px] mx-auto">
         <AnimatePresence mode="wait">
           {activeTab === 'dashboard' ? (
              <motion.div
@@ -606,6 +606,24 @@ const GSRTCNexus: React.FC = () => {
                   ))}
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="stat-card p-4 rounded-[1.35rem]">
+                    <p className="section-title">Matched routes</p>
+                    <p className="text-2xl font-black mt-2 tabular-nums">{processedTrips.length}</p>
+                    <p className="text-[10px] text-text-dim mt-1 uppercase tracking-[0.18em]">Live inventory from current filters</p>
+                  </div>
+                  <div className="stat-card p-4 rounded-[1.35rem]">
+                    <p className="section-title text-primary">Direct inventory</p>
+                    <p className="text-2xl font-black mt-2 tabular-nums">{sourceCounts.GSRTC}</p>
+                    <p className="text-[10px] text-text-dim mt-1 uppercase tracking-[0.18em]">GSRTC direct sources</p>
+                  </div>
+                  <div className="stat-card p-4 rounded-[1.35rem]">
+                    <p className="section-title text-secondary">Partner inventory</p>
+                    <p className="text-2xl font-black mt-2 tabular-nums">{sourceCounts.REDBUS}</p>
+                    <p className="text-[10px] text-text-dim mt-1 uppercase tracking-[0.18em]">Redbus indexed routes</p>
+                  </div>
+                </div>
+
                 <div className="p-2 rounded-[2rem] glass-panel flex flex-col md:flex-row items-stretch gap-2">
                   <div className="flex-1 flex flex-col md:flex-row gap-2 relative">
                     <StationAutocomplete value={origin} onChange={setOrigin} label="Origin" />
@@ -722,7 +740,7 @@ const GSRTCNexus: React.FC = () => {
                     )}
                   </AnimatePresence>
 
-                  <div className={viewMode === 'grid' ? 'grid grid-cols-1 2xl:grid-cols-2 gap-4' : 'space-y-4'}>
+                  <div className={viewMode === 'grid' ? 'grid grid-cols-1 xl:grid-cols-2 gap-3' : 'space-y-4'}>
                     {Object.entries(groupedTrips).map(([group, trips]) => (
                       <div key={group} className={viewMode === 'list' ? 'space-y-4' : 'contents'}>
                         {groupBy !== 'none' && (
