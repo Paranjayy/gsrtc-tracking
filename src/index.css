@@ -1,3 +1,20 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #60a5fa;
+  --color-primary-glow: rgba(96, 165, 250, 0.4);
+  --color-secondary: #fbbf24;
+  --color-accent: #f87171;
+  
+  --color-text-main: #f9fafb;
+  --color-text-muted: #d1d5db;
+  --color-text-dim: #9ca3af;
+  
+  --color-bg-deep: #05070a;
+  --color-bg-card: rgba(17, 25, 40, 0.75);
+  --color-bg-glass: rgba(255, 255, 255, 0.03);
+}
+
 :root {
   /* Color Palette */
   --bg-deep: #05070a;
