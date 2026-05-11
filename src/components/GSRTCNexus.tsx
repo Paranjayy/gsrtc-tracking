@@ -413,7 +413,7 @@ const GSRTCNexus: React.FC = () => {
   }, [processedTrips]);
 
   const bookingShellClass = 'booking-shell relative overflow-hidden rounded-[2.4rem] md:rounded-[2.8rem]';
-  const bookingSectionTitle = 'text-[10px] font-black uppercase tracking-[0.24em] text-slate-500';
+  const bookingSectionTitle = 'text-[9px] font-black uppercase tracking-[0.28em] text-slate-500';
   const bookingPanelClass = 'booking-panel';
 
   const FiltersPanel: React.FC<{ light?: boolean }> = ({ light = false }) => (
@@ -661,12 +661,12 @@ const GSRTCNexus: React.FC = () => {
               </div>
               <div className="relative z-10 space-y-8">
               {/* Redesigned Search Section */}
-              <section className="space-y-6">
+              <section className="booking-panel p-4 md:p-6 space-y-5">
                 <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
                   <div className="hero-copy">
                     <p className={`${bookingSectionTitle} mb-3 text-primary`}>Booking console</p>
-                    <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-3 leading-[0.92] text-slate-950 text-editorial">Route search, <span className="text-primary">reframed</span></h2>
-                    <p className="text-slate-600 text-base md:text-lg max-w-2xl">A calmer booking desk with clearer route cards, fewer collisions, and faster decisions.</p>
+                    <h2 className="text-3xl md:text-5xl font-black tracking-tight mb-3 leading-[0.9] text-slate-950 text-editorial max-w-2xl">Route search, <span className="text-primary">reframed</span></h2>
+                    <p className="text-slate-600 text-sm md:text-base max-w-2xl">A calmer booking desk with clearer route cards, fewer collisions, and faster decisions.</p>
                   </div>
                   <div className="flex items-center gap-2 booking-panel p-1.5 rounded-full self-start">
                     <button className="px-4 py-2 rounded-full text-[10px] font-black bg-slate-950 text-white flex items-center gap-2 shadow-lg uppercase tracking-[0.18em]">
@@ -694,7 +694,7 @@ const GSRTCNexus: React.FC = () => {
                         setDestination(preset.destination);
                         setActiveTab('booking');
                       }}
-                      className="text-left booking-panel p-4 rounded-[1.35rem] hover:border-primary/30 transition-all group"
+                      className="text-left booking-panel p-3 rounded-[1.25rem] hover:border-primary/30 transition-all group"
                     >
                       <p className={`${bookingSectionTitle} text-primary mb-2`}>Quick route</p>
                       <p className="text-sm md:text-base font-black tracking-tight text-slate-950 group-hover:text-primary transition-colors">
@@ -705,17 +705,17 @@ const GSRTCNexus: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div className="booking-panel p-4 rounded-[1.35rem]">
+                  <div className="booking-field p-4 rounded-[1.25rem]">
                     <p className={bookingSectionTitle}>Matched routes</p>
                     <p className="text-2xl font-black mt-2 tabular-nums text-slate-950">{processedTrips.length}</p>
                     <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-[0.18em]">Live inventory from current filters</p>
                   </div>
-                  <div className="booking-panel p-4 rounded-[1.35rem]">
+                  <div className="booking-field p-4 rounded-[1.25rem]">
                     <p className={`${bookingSectionTitle} text-primary`}>Direct inventory</p>
                     <p className="text-2xl font-black mt-2 tabular-nums text-slate-950">{sourceCounts.GSRTC}</p>
                     <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-[0.18em]">GSRTC direct sources</p>
                   </div>
-                  <div className="booking-panel p-4 rounded-[1.35rem]">
+                  <div className="booking-field p-4 rounded-[1.25rem]">
                     <p className={`${bookingSectionTitle} text-secondary`}>Partner inventory</p>
                     <p className="text-2xl font-black mt-2 tabular-nums text-slate-950">{sourceCounts.REDBUS}</p>
                     <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-[0.18em]">Redbus indexed routes</p>
@@ -723,10 +723,10 @@ const GSRTCNexus: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 xl:grid-cols-[1.25fr,0.75fr] gap-3">
-                  <div className="booking-panel p-5 rounded-[1.5rem] flex flex-col md:flex-row md:items-center gap-4">
+                  <div className="booking-panel p-4 rounded-[1.35rem] flex flex-col md:flex-row md:items-center gap-4">
                     <div className="flex-1">
                       <p className={`${bookingSectionTitle} text-primary`}>Live route overview</p>
-                      <p className="text-lg md:text-xl font-black tracking-tight mt-2 text-slate-950">A cleaner search surface for daily booking.</p>
+                      <p className="text-base md:text-lg font-black tracking-tight mt-2 text-slate-950">A cleaner search surface for daily booking.</p>
                       <p className="text-sm text-slate-600 mt-1 max-w-2xl">Use presets, filters, and quick seat actions without the page feeling crowded.</p>
                     </div>
                     <div className="grid grid-cols-3 gap-2 min-w-[18rem]">
@@ -745,10 +745,10 @@ const GSRTCNexus: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="booking-panel p-5 rounded-[1.5rem]">
+                  <div className="booking-panel p-4 rounded-[1.35rem]">
                     <p className={bookingSectionTitle}>Featured route</p>
                     <div className="mt-3 space-y-2">
-                      <p className="text-lg font-black tracking-tight text-slate-950">{featuredTrip?.origin} to {featuredTrip?.destination}</p>
+                      <p className="text-base md:text-lg font-black tracking-tight text-slate-950">{featuredTrip?.origin} to {featuredTrip?.destination}</p>
                       <div className="flex items-center justify-between text-sm text-slate-600">
                         <span>{featuredTrip?.departureTime} departure</span>
                         <span>{featuredTrip?.arrivalTime} arrival</span>
@@ -764,7 +764,7 @@ const GSRTCNexus: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="p-2 rounded-[2rem] booking-panel flex flex-col xl:flex-row items-stretch gap-2">
+                <div className="p-2 rounded-[1.75rem] booking-panel flex flex-col xl:flex-row items-stretch gap-2">
                   <div className="flex-1 flex flex-col md:flex-row gap-2 relative">
                     <StationAutocomplete value={origin} onChange={setOrigin} label="Origin" light />
                     
@@ -783,7 +783,7 @@ const GSRTCNexus: React.FC = () => {
                       setIsSearching(true);
                       setTimeout(() => setIsSearching(false), 1500);
                     }}
-                    className="bg-slate-950 text-white md:w-60 rounded-[1.5rem] flex items-center justify-center gap-4 py-5 shadow-[0_16px_35px_rgba(15,23,42,0.2)]"
+                    className="bg-slate-950 text-white md:w-60 rounded-[1.35rem] flex items-center justify-center gap-4 py-5 shadow-[0_16px_35px_rgba(15,23,42,0.2)]"
                   >
                     <AnimatePresence mode="wait">
                       {isSearching ? (
@@ -824,7 +824,7 @@ const GSRTCNexus: React.FC = () => {
               </section>
 
               {/* Filters & Results */}
-              <div className="grid grid-cols-1 xl:grid-cols-[290px_minmax(0,1fr)_300px] gap-6 items-start">
+              <div className="grid grid-cols-1 xl:grid-cols-[280px_minmax(0,1fr)_280px] gap-6 items-start">
                 {/* Sidebar Filters */}
                 <aside className="hidden xl:block space-y-6 sticky top-44">
                   <FiltersPanel light />
@@ -892,7 +892,7 @@ const GSRTCNexus: React.FC = () => {
                           <motion.div
                             layout
                             key={trip.id}
-                            className="booking-panel p-4 md:p-5 rounded-[1.4rem] group overflow-hidden relative"
+                            className="booking-panel p-4 md:p-5 rounded-[1.25rem] group overflow-hidden relative"
                           >
                             <div className="absolute top-0 right-0 w-64 h-64 bg-blue-200/40 blur-[100px] -mr-32 -mt-32 pointer-events-none" />
                             <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr] items-center">
@@ -909,7 +909,7 @@ const GSRTCNexus: React.FC = () => {
                                   </div>
                                   <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 items-center">
                                     <div className="booking-field px-4 py-3 text-left min-w-0">
-                                      <p className="text-3xl font-black tracking-tight leading-none text-editorial text-slate-950">{trip.departureTime}</p>
+                                      <p className="text-2xl md:text-[2.3rem] font-black tracking-tight leading-none text-editorial text-slate-950">{trip.departureTime}</p>
                                       <p className="text-[10px] font-semibold text-slate-500 mt-2 uppercase tracking-[0.18em] truncate">{trip.origin}</p>
                                     </div>
                                     <div className="flex flex-col items-center justify-center px-1">
@@ -923,7 +923,7 @@ const GSRTCNexus: React.FC = () => {
                                       <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{trip.duration}</span>
                                     </div>
                                     <div className="booking-field px-4 py-3 text-right min-w-0">
-                                      <p className="text-3xl font-black tracking-tight leading-none text-editorial text-slate-950">{trip.arrivalTime}</p>
+                                      <p className="text-2xl md:text-[2.3rem] font-black tracking-tight leading-none text-editorial text-slate-950">{trip.arrivalTime}</p>
                                       <p className="text-[10px] font-semibold text-slate-500 mt-2 uppercase tracking-[0.18em] truncate">{trip.destination}</p>
                                     </div>
                                   </div>
@@ -932,7 +932,7 @@ const GSRTCNexus: React.FC = () => {
                                 <div className="grid gap-2 xl:justify-items-end">
                                   <div className="xl:text-right">
                                     <p className={bookingSectionTitle}>Fare</p>
-                                    <p className="text-4xl font-black text-slate-950 tracking-tight leading-none text-editorial">₹{trip.fare}</p>
+                                    <p className="text-3xl md:text-[2.8rem] font-black text-slate-950 tracking-tight leading-none text-editorial">₹{trip.fare}</p>
                                   </div>
                                   <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
                                     <div className={`w-1.5 h-1.5 rounded-full ${trip.seatsAvailable < 10 ? 'bg-accent' : 'bg-primary'}`} />
@@ -943,13 +943,13 @@ const GSRTCNexus: React.FC = () => {
 
                               <div className="grid grid-cols-2 gap-2 xl:grid-cols-1 xl:justify-items-stretch">
                                 <button 
-                                  className="w-full h-11 rounded-[0.9rem] flex items-center justify-center gap-2 text-[11px] bg-slate-950 text-white font-black uppercase tracking-[0.18em]"
+                                  className="w-full h-10 rounded-[0.8rem] flex items-center justify-center gap-2 text-[10px] bg-slate-950 text-white font-black uppercase tracking-[0.18em]"
                                   onClick={() => window.open(trip.source === 'REDBUS' ? 'https://www.redbus.in/' : 'https://gsrtc.in/site/', '_blank')}
                                 >
                                   Choose seats <ArrowRight size={14} />
                                 </button>
                                 <button 
-                                  className="w-full h-11 booking-field hover:bg-white rounded-[0.9rem] flex items-center justify-center gap-2 transition-all font-semibold text-[10px] uppercase tracking-[0.18em] text-slate-500 hover:text-slate-900 group/track"
+                                  className="w-full h-10 booking-field hover:bg-white rounded-[0.8rem] flex items-center justify-center gap-2 transition-all font-semibold text-[10px] uppercase tracking-[0.18em] text-slate-500 hover:text-slate-900 group/track"
                                   onClick={() => {
                                     setSearchQuery(trip.busNumber);
                                     setActiveTab('tracking');
@@ -968,9 +968,9 @@ const GSRTCNexus: React.FC = () => {
                 </div>
 
                 <aside className="hidden xl:block space-y-4 sticky top-44">
-                  <div className="booking-panel p-5 rounded-[1.5rem] space-y-3">
+                  <div className="booking-panel p-4 rounded-[1.35rem] space-y-3">
                     <p className={bookingSectionTitle}>Route summary</p>
-                    <p className="text-lg font-black tracking-tight text-slate-950">{featuredTrip?.origin} → {featuredTrip?.destination}</p>
+                    <p className="text-base md:text-lg font-black tracking-tight text-slate-950">{featuredTrip?.origin} → {featuredTrip?.destination}</p>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="booking-field p-3">
                         <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Duration</p>
@@ -983,7 +983,7 @@ const GSRTCNexus: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="booking-panel p-5 rounded-[1.5rem] space-y-3">
+                  <div className="booking-panel p-4 rounded-[1.35rem] space-y-3">
                     <p className={bookingSectionTitle}>Action notes</p>
                     <ul className="space-y-3 text-sm text-slate-600">
                       <li>Keep filters narrow for faster browsing.</li>
