@@ -10,6 +10,7 @@ export interface BusTrip {
   fare: number;
   seatsAvailable: number;
   route: string[];
+  source: 'GSRTC' | 'REDBUS';
 }
 
 export interface TrackingInfo {

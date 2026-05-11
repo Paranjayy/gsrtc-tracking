@@ -12,7 +12,8 @@ export const MOCK_TRIPS: BusTrip[] = [
     destination: 'Rajkot Busport',
     fare: 267.0,
     seatsAvailable: 45,
-    route: ['Junagadh', 'Jetpur', 'Gondal', 'Rajkot']
+    route: ['Junagadh', 'Jetpur', 'Gondal', 'Rajkot'],
+    source: 'GSRTC'
   },
   {
     id: '2',
@@ -25,7 +26,8 @@ export const MOCK_TRIPS: BusTrip[] = [
     destination: 'Rajkot Busport',
     fare: 185.0,
     seatsAvailable: 39,
-    route: ['Junagadh', 'Gondal', 'Rajkot']
+    route: ['Junagadh', 'Gondal', 'Rajkot'],
+    source: 'GSRTC'
   },
   {
     id: '3',
@@ -38,7 +40,8 @@ export const MOCK_TRIPS: BusTrip[] = [
     destination: 'Rajkot Busport',
     fare: 123.0,
     seatsAvailable: 42,
-    route: ['Junagadh', 'Rajkot']
+    route: ['Junagadh', 'Rajkot'],
+    source: 'GSRTC'
   },
   {
     id: '4',
@@ -51,7 +54,8 @@ export const MOCK_TRIPS: BusTrip[] = [
     destination: 'Rajkot Busport',
     fare: 310.0,
     seatsAvailable: 12,
-    route: ['Junagadh', 'Rajkot']
+    route: ['Junagadh', 'Rajkot'],
+    source: 'GSRTC'
   },
   {
     id: '5',
@@ -64,7 +68,36 @@ export const MOCK_TRIPS: BusTrip[] = [
     destination: 'Rajkot Busport',
     fare: 267.0,
     seatsAvailable: 41,
-    route: ['Junagadh', 'Jetpur', 'Rajkot']
+    route: ['Junagadh', 'Jetpur', 'Rajkot'],
+    source: 'GSRTC'
+  },
+  {
+    id: 'r1',
+    busNumber: 'REDBUS-GS-101',
+    busType: 'VOLVO',
+    departureTime: '10:30',
+    duration: '02:15',
+    arrivalTime: '12:45',
+    origin: 'Junagadh Busport',
+    destination: 'Rajkot Busport',
+    fare: 285.0,
+    seatsAvailable: 15,
+    route: ['Junagadh', 'Rajkot'],
+    source: 'REDBUS'
+  },
+  {
+    id: 'r2',
+    busNumber: 'REDBUS-GS-202',
+    busType: 'SLEEPER',
+    departureTime: '23:55',
+    duration: '02:30',
+    arrivalTime: '02:25',
+    origin: 'Junagadh Busport',
+    destination: 'Rajkot Busport',
+    fare: 340.0,
+    seatsAvailable: 8,
+    route: ['Junagadh', 'Rajkot'],
+    source: 'REDBUS'
   }
 ];
 

@@ -42,22 +42,22 @@ const MagicDatePicker: React.FC<{ selectedDate: string; onChange: (date: string)
   }, []);
 
   return (
-    <div className="flex gap-2 overflow-x-auto py-2 no-scrollbar scroll-smooth">
+    <div className="flex gap-3 overflow-x-auto py-4 no-scrollbar scroll-smooth">
       {dates.map((date, i) => {
         const isSelected = date.toISOString().split('T')[0] === selectedDate;
         return (
           <button
             key={i}
             onClick={() => onChange(date.toISOString().split('T')[0])}
-            className={`flex-shrink-0 w-16 h-20 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all border ${
+            className={`flex-shrink-0 w-20 h-28 rounded-3xl flex flex-col items-center justify-center gap-2 transition-all border ${
               isSelected 
-                ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' 
-                : 'glass-light border-white/5 text-text-dim hover:border-white/20'
+                ? 'bg-primary border-primary text-white shadow-[0_10px_30px_rgba(59,130,246,0.4)] scale-105 z-10' 
+                : 'bg-white/5 border-white/5 text-text-dim hover:border-white/20 hover:bg-white/10'
             }`}
           >
-            <span className="text-[10px] uppercase font-bold tracking-widest">{date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
-            <span className="text-xl font-bold">{date.getDate()}</span>
-            <span className="text-[10px] opacity-60 font-medium">{date.toLocaleDateString('en-US', { month: 'short' })}</span>
+            <span className={`text-[10px] uppercase font-black tracking-[0.2em] ${isSelected ? 'text-white/80' : 'text-text-dim/60'}`}>{date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+            <span className="text-3xl font-black text-editorial">{date.getDate()}</span>
+            <span className={`text-[10px] font-black uppercase tracking-widest ${isSelected ? 'text-white/60' : 'text-text-dim/40'}`}>{date.toLocaleDateString('en-US', { month: 'short' })}</span>
           </button>
         );
       })}
@@ -74,12 +74,15 @@ const StationAutocomplete: React.FC<{ value: string; onChange: (val: string) => 
 
   return (
     <div className="relative flex-1">
-      <div className="glass-light px-6 py-4 rounded-3xl flex flex-col justify-center border border-transparent hover:border-primary/20 transition-all group">
-        <span className="text-[10px] text-primary font-bold uppercase tracking-widest mb-1 group-hover:translate-x-1 transition-transform">{label}</span>
-        <div className="flex items-center gap-3">
-          {label === 'Origin' ? <Locate size={18} className="text-text-dim" /> : <MapPin size={18} className="text-text-dim" />}
+      <div className="bg-white/5 px-8 py-6 rounded-[2rem] flex flex-col justify-center border border-white/5 hover:border-primary/40 transition-all group focus-within:border-primary focus-within:bg-white/[0.08]">
+        <span className="text-[10px] text-primary font-black uppercase tracking-[0.3em] mb-2 group-hover:translate-x-1 transition-transform">{label}</span>
+        <div className="flex items-center gap-4">
+          <div className="p-2 bg-primary/10 rounded-xl">
+            {label === 'Origin' ? <Locate size={20} className="text-primary" /> : <MapPin size={20} className="text-primary" />}
+          </div>
           <input 
-            className="bg-transparent w-full text-xl font-bold outline-none" 
+            className="bg-transparent w-full text-2xl font-black outline-none placeholder:text-text-dim/20 text-editorial tracking-tight" 
+            placeholder={`Enter ${label}...`}
             value={value}
             onChange={(e) => { onChange(e.target.value); setShow(true); }}
             onFocus={() => setShow(true)}
@@ -90,19 +93,19 @@ const StationAutocomplete: React.FC<{ value: string; onChange: (val: string) => 
       <AnimatePresence>
         {show && filtered.length > 0 && (
           <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="absolute top-full left-0 w-full mt-2 glass p-2 rounded-2xl z-[60] border border-white/10 shadow-2xl"
+            initial={{ opacity: 0, y: 15, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 15, scale: 0.95 }}
+            className="absolute top-full left-0 w-full mt-4 glass-panel p-3 rounded-3xl z-[60] border border-white/10 shadow-3xl"
           >
             {filtered.map(s => (
               <button
                 key={s}
                 onClick={() => { onChange(s); setShow(false); }}
-                className="w-full text-left px-4 py-3 rounded-xl hover:bg-primary/10 text-sm font-bold transition-all flex items-center justify-between group"
+                className="w-full text-left px-5 py-4 rounded-2xl hover:bg-primary text-sm font-black transition-all flex items-center justify-between group/item"
               >
-                {s}
-                <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                <span className="group-hover/item:text-white transition-colors">{s.toUpperCase()}</span>
+                <ArrowRight size={16} className="opacity-0 group-hover/item:opacity-100 group-hover/item:translate-x-1 transition-all" />
               </button>
             ))}
           </motion.div>
@@ -131,17 +134,19 @@ const TerminalFeed: React.FC<{ logs: string[] }> = ({ logs }) => {
 };
 
 const GSRTCNexus: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'tracking' | 'booking'>('booking');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'tracking' | 'booking'>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [sortBy, setSortBy] = useState<'fare' | 'time' | 'seats'>('time');
   const [filterType, setFilterType] = useState<string>('ALL');
+  const [filterSource, setFilterSource] = useState<'ALL' | 'GSRTC' | 'REDBUS'>('ALL');
   const [groupBy, setGroupBy] = useState<'none' | 'type'>('none');
   const [trackingData, setTrackingData] = useState<TrackingInfo | null>(null);
   const [isLive, setIsLive] = useState(false);
   const [travelDate, setTravelDate] = useState('2026-05-14');
   const [logs, setLogs] = useState<string[]>(['SYS: Booting VTS Engine...', 'SYS: Handshaking with Amnex...', 'SYS: OK']);
   const [isScanning, setIsScanning] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const [favorites, setFavorites] = useState<string[]>(() => JSON.parse(localStorage.getItem('nexus_favs') || '[]'));
   const [recentSearches, setRecentSearches] = useState<string[]>(() => JSON.parse(localStorage.getItem('nexus_recent') || '[]'));
   const [origin, setOrigin] = useState('Junagadh Busport');
@@ -227,6 +232,11 @@ const GSRTCNexus: React.FC = () => {
       result = result.filter(t => t.busType === filterType);
     }
 
+    // Filter by source
+    if (filterSource !== 'ALL') {
+      result = result.filter(t => t.source === filterSource);
+    }
+
     // Sort
     result.sort((a, b) => {
       if (sortBy === 'fare') return a.fare - b.fare;
@@ -265,16 +275,18 @@ const GSRTCNexus: React.FC = () => {
           </div>
         </div>
         
-        <nav className="hidden md:flex items-center gap-1 glass-light p-1 rounded-full">
-          {(['booking', 'tracking'] as const).map((tab) => (
+        <nav className="hidden md:flex items-center gap-1 glass-panel p-1.5 rounded-full text-[10px]">
+          {(['dashboard', 'booking', 'tracking'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
-                activeTab === tab ? 'bg-primary text-white' : 'text-text-muted hover:text-white'
+              className={`px-8 py-2 rounded-full font-black transition-all uppercase tracking-[0.2em] ${
+                activeTab === tab 
+                  ? 'bg-primary text-white shadow-xl shadow-primary/20' 
+                  : 'text-text-muted hover:text-white hover:bg-white/5'
               }`}
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab}
             </button>
           ))}
         </nav>
@@ -292,7 +304,93 @@ const GSRTCNexus: React.FC = () => {
 
       <main className="pt-32 px-6 max-w-7xl mx-auto">
         <AnimatePresence mode="wait">
-          {activeTab === 'booking' ? (
+          {activeTab === 'dashboard' ? (
+             <motion.div
+               key="dashboard"
+               initial={{ opacity: 0, y: 20 }}
+               animate={{ opacity: 1, y: 0 }}
+               exit={{ opacity: 0, y: -20 }}
+               className="space-y-12"
+             >
+                <section>
+                   <div className="flex flex-col md:flex-row items-end justify-between gap-6 mb-8">
+                     <div className="max-w-xl">
+                       <h2 className="text-6xl font-black tracking-tighter mb-2">Nexus <span className="text-primary">Intelligence</span></h2>
+                       <p className="text-text-muted text-xl">Operational overview of the GSRTC fleet and partnered networks.</p>
+                     </div>
+                     <div className="flex items-center gap-4">
+                        <div className="glass px-6 py-3 rounded-2xl border border-white/5">
+                           <p className="text-[10px] font-black text-primary uppercase tracking-widest">Fleet Online</p>
+                           <p className="text-2xl font-black">4,281 <span className="text-sm font-bold text-text-dim">Buses</span></p>
+                        </div>
+                        <div className="glass px-6 py-3 rounded-2xl border border-white/5">
+                           <p className="text-[10px] font-black text-secondary uppercase tracking-widest">Network Load</p>
+                           <p className="text-2xl font-black text-secondary">Optimal</p>
+                        </div>
+                     </div>
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div 
+                        onClick={() => setActiveTab('tracking')}
+                        className="glass p-8 rounded-[2.5rem] border border-white/5 hover:border-primary/40 transition-all cursor-pointer group"
+                      >
+                         <div className="w-14 h-14 bg-primary/20 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <Navigation size={28} className="text-primary" />
+                         </div>
+                         <h3 className="text-2xl font-bold mb-2">Fleet Tracker</h3>
+                         <p className="text-text-muted text-sm leading-relaxed">Real-time GPS telemetry for 8000+ active GSRTC vehicles. Deep-scan capability enabled.</p>
+                      </div>
+                      
+                      <div 
+                        onClick={() => setActiveTab('booking')}
+                        className="glass p-8 rounded-[2.5rem] border border-white/5 hover:border-secondary/40 transition-all cursor-pointer group"
+                      >
+                         <div className="w-14 h-14 bg-secondary/20 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <Search size={28} className="text-secondary" />
+                         </div>
+                         <h3 className="text-2xl font-bold mb-2">Universal Booking</h3>
+                         <p className="text-text-muted text-sm leading-relaxed">Aggregated search from GSRTC Direct and Redbus Indexing. Get the lowest fares instantly.</p>
+                      </div>
+
+                      <div 
+                        className="glass p-8 rounded-[2.5rem] border border-white/5 hover:border-accent/40 transition-all cursor-pointer group"
+                      >
+                         <div className="w-14 h-14 bg-accent/20 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <Cpu size={28} className="text-accent" />
+                         </div>
+                         <h3 className="text-2xl font-bold mb-2">VTS Forensic</h3>
+                         <p className="text-text-muted text-sm leading-relaxed">Analyze raw vehicle logs, speed metrics, and waypoint precision in real-time.</p>
+                      </div>
+                   </div>
+                </section>
+
+                <section className="space-y-6">
+                   <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-bold uppercase tracking-widest text-text-dim flex items-center gap-2">
+                         <History size={14} className="text-primary" /> Recent Fleet Signals
+                      </h3>
+                      <button className="text-[10px] font-black text-primary hover:underline">VIEW ALL SIGNALS</button>
+                   </div>
+                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {recentSearches.length > 0 ? recentSearches.map(id => (
+                        <div key={id} onClick={() => { setSearchQuery(id); setActiveTab('tracking'); }} className="glass-light p-6 rounded-3xl border border-white/5 hover:border-primary/20 transition-all cursor-pointer group">
+                           <div className="flex items-center justify-between mb-4">
+                              <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest">{id}</span>
+                              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                           </div>
+                           <p className="text-lg font-bold group-hover:text-primary transition-colors">TRACKING_UPDATING...</p>
+                           <p className="text-[10px] text-text-dim mt-1">Last seen: Just now</p>
+                        </div>
+                      )) : (
+                        <div className="col-span-full py-12 text-center border-2 border-dashed border-white/5 rounded-[2.5rem]">
+                           <p className="text-text-muted">No recent fleet signals detected. Start tracking to see history.</p>
+                        </div>
+                      )}
+                   </div>
+                </section>
+             </motion.div>
+          ) : activeTab === 'booking' ? (
             <motion.div
               key="booking"
               initial={{ opacity: 0, y: 20 }}
@@ -304,26 +402,26 @@ const GSRTCNexus: React.FC = () => {
               <section className="space-y-6">
                 <div className="flex flex-col md:flex-row items-end justify-between gap-6">
                   <div className="max-w-xl">
-                    <h2 className="text-5xl font-bold tracking-tighter mb-2">Nexus <span className="text-primary">Booking</span></h2>
-                    <p className="text-text-muted text-lg">Intelligent route discovery with real-time seat telemetry.</p>
+                    <h2 className="text-7xl font-black tracking-tighter mb-2 leading-none">Nexus <span className="text-primary">Booking</span></h2>
+                    <p className="text-text-muted text-xl font-medium">Intelligent route discovery with real-time seat telemetry.</p>
                   </div>
-                  <div className="flex items-center gap-2 glass-light p-1.5 rounded-2xl border border-white/5">
-                    <button className="px-4 py-2 rounded-xl text-sm font-bold bg-white/5 text-white flex items-center gap-2">
-                       <Zap size={14} className="text-primary" /> Instant Book
+                  <div className="flex items-center gap-3 p-1.5 rounded-2xl glass-panel border border-white/5">
+                    <button className="px-6 py-2 rounded-xl text-xs font-black bg-primary text-white flex items-center gap-2 shadow-lg shadow-primary/20">
+                       <Zap size={14} /> INSTANT BOOK
                     </button>
-                    <button className="px-4 py-2 rounded-xl text-sm font-medium text-text-dim hover:text-white transition-all">
+                    <button className="px-6 py-2 rounded-xl text-xs font-bold text-text-dim hover:text-white transition-all uppercase tracking-widest">
                        Corporate
                     </button>
                   </div>
                 </div>
 
-                <div className="glass p-2 rounded-[2rem] border border-white/5 flex flex-col md:flex-row items-stretch gap-2">
+                <div className="p-2 rounded-[2.5rem] glass-panel flex flex-col md:flex-row items-stretch gap-2">
                   <div className="flex-1 flex flex-col md:flex-row gap-2 relative">
                     <StationAutocomplete value={origin} onChange={setOrigin} label="Origin" />
                     
                     <div 
                       onClick={() => { const tmp = origin; setOrigin(destination); setDestination(tmp); }}
-                      className="w-12 h-12 self-center bg-white/5 rounded-full flex items-center justify-center rotate-90 md:rotate-0 text-text-dim hover:text-primary transition-all cursor-pointer z-10"
+                      className="w-14 h-14 self-center bg-white/5 rounded-full flex items-center justify-center rotate-90 md:rotate-0 text-text-dim hover:text-primary transition-all cursor-pointer z-10 border border-white/5 shadow-xl hover:scale-110"
                     >
                        <ArrowRight size={20} />
                     </div>
@@ -331,9 +429,38 @@ const GSRTCNexus: React.FC = () => {
                     <StationAutocomplete value={destination} onChange={setDestination} label="Destination" />
                   </div>
 
-                  <button className="primary-button md:w-48 rounded-[1.5rem] flex items-center justify-center gap-3 text-xl font-bold py-6">
-                    <Search size={24} />
-                    Search
+                  <button 
+                    onClick={() => {
+                      setIsSearching(true);
+                      setTimeout(() => setIsSearching(false), 1500);
+                    }}
+                    className="primary-button md:w-64 rounded-[2rem] flex items-center justify-center gap-4 py-6"
+                  >
+                    <AnimatePresence mode="wait">
+                      {isSearching ? (
+                        <motion.div 
+                          key="searching"
+                          initial={{ y: 20, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          exit={{ y: -20, opacity: 0 }}
+                          className="flex items-center gap-3"
+                        >
+                          <RefreshCw size={24} className="animate-spin" /> 
+                          <span className="text-xs font-black">INDEXING...</span>
+                        </motion.div>
+                      ) : (
+                        <motion.div 
+                          key="search"
+                          initial={{ y: 20, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          exit={{ y: -20, opacity: 0 }}
+                          className="flex items-center gap-3"
+                        >
+                          <Search size={24} /> 
+                          <span className="font-black">SEARCH</span>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </button>
                 </div>
 
@@ -373,6 +500,23 @@ const GSRTCNexus: React.FC = () => {
                             }`}
                           >
                             {type}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <label className="text-sm text-text-dim block uppercase tracking-wider font-bold">Source</label>
+                      <div className="flex gap-2">
+                        {['ALL', 'GSRTC', 'REDBUS'].map(src => (
+                          <button
+                            key={src}
+                            onClick={() => setFilterSource(src as any)}
+                            className={`flex-1 py-2 rounded-lg text-[10px] font-black border transition-all ${
+                              filterSource === src ? 'bg-primary/20 border-primary text-primary' : 'border-white/5 text-text-muted'
+                            }`}
+                          >
+                            {src}
                           </button>
                         ))}
                       </div>
@@ -446,64 +590,87 @@ const GSRTCNexus: React.FC = () => {
                           <motion.div
                             layout
                             key={trip.id}
-                            className={`glass p-8 rounded-[2.5rem] group border border-white/5 hover:border-primary/40 transition-all shadow-xl hover:shadow-primary/5 ${
-                              viewMode === 'list' ? 'flex flex-col md:flex-row items-stretch gap-12' : 'flex flex-col'
+                            className={`glass-card p-10 rounded-[3rem] group border border-white/5 hover:border-primary/30 shadow-2xl overflow-hidden relative ${
+                              viewMode === 'list' ? 'flex flex-col lg:flex-row items-center gap-12' : 'flex flex-col'
                             }`}
                           >
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[100px] -mr-32 -mt-32 pointer-events-none" />
                             <div className="flex-1 flex flex-col justify-between gap-6 w-full">
                               <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                  <span className={`text-[10px] font-black px-3 py-1 rounded-full border ${
-                                    trip.busType === 'VOLVO' ? 'bg-secondary/10 border-secondary text-secondary' : 'bg-white/5 border-white/10 text-text-dim'
+                                <div className="flex items-center gap-4">
+                                  <div className="flex flex-col">
+                                    <span className="text-[10px] font-black text-primary uppercase tracking-[0.25em] mb-1">{trip.busType}</span>
+                                    <span className="text-xs font-bold text-text-dim tracking-widest uppercase">{trip.busNumber}</span>
+                                  </div>
+                                  <span className={`text-[10px] font-black px-4 py-1 rounded-full border shadow-sm ${
+                                    trip.source === 'REDBUS' ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' : 'bg-green-500/10 border-green-500/20 text-green-500'
                                   }`}>
-                                    {trip.busType}
+                                    {trip.source === 'REDBUS' ? 'INDEXED VIA REDBUS' : 'GSRTC DIRECT'}
                                   </span>
-                                  <span className="text-[10px] font-bold text-text-dim/60 tracking-widest uppercase">{trip.busNumber}</span>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                   <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                                   <span className="text-[10px] font-bold text-green-500 uppercase">Available</span>
+                                <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/5">
+                                   <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                   <span className="text-[10px] font-black text-green-500 uppercase tracking-widest">LIVE_SIGNAL_ACTIVE</span>
                                 </div>
                               </div>
                               
                               <div className="flex items-center justify-between gap-8 relative">
-                                <div className="z-10 bg-black/20 backdrop-blur-md p-4 rounded-3xl border border-white/5 min-w-[120px]">
-                                  <p className="text-4xl font-black tracking-tighter">{trip.departureTime}</p>
-                                  <p className="text-sm font-bold text-text-dim mt-1">{trip.origin}</p>
+                                <div className="z-10 bg-black/40 backdrop-blur-2xl p-6 rounded-[2rem] border border-white/10 text-left min-w-[150px] group-hover:border-primary/20 transition-all">
+                                  <p className="text-6xl font-black tracking-tighter leading-none text-editorial">{trip.departureTime}</p>
+                                  <p className="text-[10px] font-black text-text-muted mt-3 uppercase tracking-[0.2em]">{trip.origin}</p>
                                 </div>
 
-                                <div className="flex-1 flex flex-col items-center gap-2 px-4">
-                                  <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">{trip.duration}</span>
-                                  <div className="w-full h-[2px] bg-white/5 relative">
-                                    <div className="absolute top-1/2 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-[#05070a] border-2 border-primary shadow-[0_0_15px_rgba(96,165,250,0.5)] flex items-center justify-center">
-                                       <div className="w-1 h-1 rounded-full bg-primary" />
-                                    </div>
+                                <div className="flex-1 flex flex-col items-center justify-center relative px-4">
+                                  <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                                  <div className="relative z-10 flex flex-col items-center gap-3">
+                                     <div className="px-5 py-1 rounded-full glass-panel border-primary/30 shadow-lg shadow-primary/10">
+                                        <span className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">DIRECT</span>
+                                     </div>
+                                     <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_10px_rgba(59,130,246,0.8)]" />
+                                        <div className="w-20 h-px bg-gradient-to-r from-primary to-transparent opacity-40" />
+                                        <div className="w-2 h-2 rounded-full border-2 border-primary/40" />
+                                     </div>
+                                     <span className="text-[11px] font-black text-text-dim uppercase tracking-[0.3em]">{trip.duration}</span>
                                   </div>
-                                  <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest">DIRECT</span>
                                 </div>
 
-                                <div className="z-10 bg-black/20 backdrop-blur-md p-4 rounded-3xl border border-white/5 text-right min-w-[120px]">
-                                  <p className="text-4xl font-black tracking-tighter">{trip.arrivalTime}</p>
-                                  <p className="text-sm font-bold text-text-dim mt-1">{trip.destination}</p>
+                                <div className="z-10 bg-black/40 backdrop-blur-2xl p-6 rounded-[2rem] border border-white/10 text-right min-w-[150px] group-hover:border-primary/20 transition-all">
+                                  <p className="text-6xl font-black tracking-tighter leading-none text-editorial">{trip.arrivalTime}</p>
+                                  <p className="text-[10px] font-black text-text-muted mt-3 uppercase tracking-[0.2em]">{trip.destination}</p>
                                 </div>
                               </div>
                             </div>
 
-                            <div className={`flex flex-col justify-between gap-6 ${viewMode === 'list' ? 'md:border-l md:border-white/5 md:pl-12 md:min-w-[200px]' : 'mt-8 pt-8 border-t border-white/5'}`}>
-                              <div className="text-right space-y-1">
-                                <p className="text-[10px] text-text-dim uppercase font-black tracking-widest">Starting from</p>
-                                <p className="text-5xl font-black text-white tracking-tighter">₹{trip.fare}</p>
-                                <p className={`text-xs font-bold ${trip.seatsAvailable < 10 ? 'text-accent' : 'text-primary'}`}>
-                                  {trip.seatsAvailable} Seats Remaining
-                                </p>
+                            <div className={`flex flex-col justify-between gap-10 ${viewMode === 'list' ? 'lg:border-l lg:border-white/10 lg:pl-12 lg:min-w-[280px]' : 'mt-12 pt-12 border-t border-white/5'}`}>
+                              <div className="text-right space-y-2">
+                                <p className="text-[10px] text-text-dim uppercase font-black tracking-[0.3em]">Operational Fare</p>
+                                <p className="text-7xl font-black text-white tracking-tighter leading-none text-editorial">₹{trip.fare}</p>
+                                <div className="flex items-center justify-end gap-2 mt-3">
+                                   <div className={`w-1.5 h-1.5 rounded-full ${trip.seatsAvailable < 10 ? 'bg-accent' : 'bg-primary'}`} />
+                                   <p className={`text-[10px] font-black tracking-widest uppercase ${trip.seatsAvailable < 10 ? 'text-accent' : 'text-primary'}`}>
+                                     {trip.seatsAvailable} SEATS REMAINING
+                                   </p>
+                                </div>
                               </div>
-                              <button 
-                                className="w-full h-16 bg-white/5 rounded-2xl flex items-center justify-center gap-3 group-hover:bg-primary group-hover:text-white transition-all font-black text-sm uppercase tracking-widest border border-white/10 group-hover:border-primary shadow-xl"
-                                onClick={() => window.open('https://gsrtc.in/site/', '_blank')}
-                              >
-                                Select Seat <ArrowRight size={18} />
-                              </button>
+                              <div className="space-y-3">
+                                <button 
+                                  className="primary-button w-full h-16 rounded-2xl flex items-center justify-center gap-4 shadow-3xl text-sm"
+                                  onClick={() => window.open(trip.source === 'REDBUS' ? 'https://www.redbus.in/' : 'https://gsrtc.in/site/', '_blank')}
+                                >
+                                  SELECT SEAT <ArrowRight size={18} />
+                                </button>
+                                <button 
+                                  className="w-full h-12 glass-panel hover:bg-white/10 rounded-2xl flex items-center justify-center gap-3 transition-all font-black text-[10px] uppercase tracking-[0.25em] text-text-dim hover:text-white group/track"
+                                  onClick={() => {
+                                    setSearchQuery(trip.busNumber);
+                                    setActiveTab('tracking');
+                                    handleManualScan();
+                                  }}
+                                >
+                                  <Activity size={16} className="text-primary group-hover/track:animate-pulse" /> TRACK TELEMETRY
+                                </button>
+                              </div>
                             </div>
                           </motion.div>
                         ))}
@@ -627,17 +794,34 @@ const GSRTCNexus: React.FC = () => {
                             </div>
                           </div>
 
-                          <div className="mt-6 pt-4 border-t border-white/5 space-y-3">
+                          <div className="mt-6 pt-4 border-t border-white/5 space-y-4">
+                             <div className="space-y-2">
+                                <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-text-dim">
+                                   <span>Proximity to {trackingData.nextStation}</span>
+                                   <span className="text-primary">{trackingData.distanceToNext} KM REMAINING</span>
+                                </div>
+                                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                   <motion.div 
+                                     initial={{ width: 0 }}
+                                     animate={{ width: `${Math.max(10, 100 - (trackingData.distanceToNext || 0))}%` }}
+                                     className="h-full bg-primary shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]"
+                                   />
+                                </div>
+                             </div>
+
                             <div className="flex items-center justify-between text-xs">
-                              <span className="text-text-dim font-medium uppercase tracking-tighter truncate">Next: {trackingData.nextStation}</span>
+                              <span className="text-text-dim font-medium uppercase tracking-tighter truncate">ETA: {trackingData.eta}</span>
                               <div className="flex items-center gap-2">
-                                <span className="text-text-dim font-bold">ETA: {trackingData.eta}</span>
-                                <span className="text-primary font-bold">({trackingData.distanceToNext} KM)</span>
+                                <span className="text-primary font-bold">LIVE SIGNAL</span>
+                                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                               </div>
                             </div>
-                            <div className="flex items-center justify-between text-[10px] font-mono text-text-dim bg-white/5 p-2 rounded-lg">
-                              <span>Lat: {trackingData.lat}</span>
-                              <span>Long: {trackingData.lng}</span>
+                            <div className="flex items-center justify-between text-[10px] font-mono text-text-dim bg-white/5 p-2 rounded-lg border border-white/5">
+                               <div className="flex items-center gap-2">
+                                  <MapPin size={10} className="text-primary" />
+                                  <span>{trackingData.lat.toFixed(6)}, {trackingData.lng.toFixed(6)}</span>
+                               </div>
+                               <button onClick={() => window.open(`https://www.google.com/maps?q=${trackingData.lat},${trackingData.lng}`, '_blank')} className="text-primary hover:underline">OPEN MAP</button>
                             </div>
                           </div>
                         </section>
@@ -755,14 +939,26 @@ const GSRTCNexus: React.FC = () => {
                     </div>
                   </>
                 ) : (
-                  <div className="text-center z-10 space-y-4 mx-auto my-auto">
-                    <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto animate-pulse">
-                      <Navigation size={32} className="text-primary" />
-                    </div>
-                    <h3 className="text-xl font-medium">Tracking Intelligence Enabled</h3>
-                    <p className="text-text-muted max-w-sm mx-auto text-sm">
-                      Searching for fleet signals. GPS telemetry will appear here once a valid vehicle ID is provided.
-                    </p>
+                  <div className="flex-1 flex items-center justify-center relative overflow-hidden">
+                     <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(var(--primary) 1px, transparent 0)', backgroundSize: '40px 40px' }} />
+                     
+                     <motion.div 
+                       initial={{ opacity: 0, scale: 0.9 }}
+                       animate={{ opacity: 1, scale: 1 }}
+                       className="relative z-10 text-center max-w-md p-12"
+                     >
+                        <div className="w-24 h-24 bg-primary/10 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 border border-primary/20 animate-float shadow-2xl shadow-primary/10">
+                           <Navigation size={48} className="text-primary" />
+                        </div>
+                        <h3 className="text-3xl font-black tracking-tighter mb-4 text-editorial">Awaiting Signal...</h3>
+                        <p className="text-text-muted text-lg leading-relaxed mb-8">
+                           Enter a vehicle registration number above to begin high-fidelity telemetry extraction.
+                        </p>
+                        <div className="flex items-center justify-center gap-3">
+                           <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                           <span className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">VTS_LINK_READY</span>
+                        </div>
+                     </motion.div>
                   </div>
                 )}
                 
@@ -777,16 +973,16 @@ const GSRTCNexus: React.FC = () => {
 
       {/* Floating Action Menu for Mobile */}
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 glass px-2 py-2 rounded-full flex items-center gap-1 shadow-2xl md:hidden">
-        {(['booking', 'tracking'] as const).map((tab) => (
+        {(['dashboard', 'booking', 'tracking'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-6 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${
+            className={`px-4 py-2 rounded-full text-[10px] font-black transition-all flex items-center gap-2 ${
               activeTab === tab ? 'bg-primary text-white' : 'text-text-muted'
             }`}
           >
-            {tab === 'booking' ? <Search size={16} /> : <Navigation size={16} />}
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            {tab === 'dashboard' ? <Grid size={14} /> : tab === 'booking' ? <Search size={14} /> : <Navigation size={14} />}
+            {tab.toUpperCase()}
           </button>
         ))}
       </div>
