@@ -21,6 +21,16 @@ export interface TrackingInfo {
   lastUpdated: string;
   status: 'On time' | 'Delayed' | 'Arrived';
   depot: string;
+  nextStation?: string;
+  eta?: string;
+  lastStation?: string;
+  lastArrival?: string;
+  events?: {
+    type: string;
+    location: string;
+    time: string;
+    status: 'On time' | 'Delayed' | 'Checked';
+  }[];
 }
 
 export interface SearchParams {

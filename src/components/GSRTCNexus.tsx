@@ -13,10 +13,16 @@ import {
   List as ListIcon,
   ChevronRight,
   TrendingUp,
-  Map as MapIcon
+  Map as MapIcon,
+  Activity,
+  History,
+  Navigation2,
+  Share2,
+  AlertCircle
 } from 'lucide-react';
 import { MOCK_TRIPS } from '../services/mockData';
-import type { BusTrip } from '../types';
+import { GSRTCService } from '../services/gsrtc';
+import type { BusTrip, TrackingInfo } from '../types';
 
 const GSRTCNexus: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'tracking' | 'booking'>('booking');
@@ -25,6 +31,8 @@ const GSRTCNexus: React.FC = () => {
   const [sortBy, setSortBy] = useState<'fare' | 'time' | 'seats'>('time');
   const [filterType, setFilterType] = useState<string>('ALL');
   const [groupBy, setGroupBy] = useState<'none' | 'type'>('none');
+  const [trackingData, setTrackingData] = useState<TrackingInfo | null>(null);
+  const [isLive, setIsLive] = useState(false);
 
   // Deep linking for tracking
   useEffect(() => {
@@ -35,6 +43,22 @@ const GSRTCNexus: React.FC = () => {
       setActiveTab('tracking');
     }
   }, []);
+
+  // Live Tracking Polling (Virtual Socket)
+  useEffect(() => {
+    if (activeTab === 'tracking' && searchQuery.length >= 6) {
+      setIsLive(true);
+      const stop = GSRTCService.startVirtualSocket(searchQuery, (data) => {
+        setTrackingData(data);
+      });
+      return () => {
+        stop();
+        setIsLive(false);
+      };
+    } else {
+      setTrackingData(null);
+    }
+  }, [activeTab, searchQuery]);
 
   const formatVehicleNo = (val: string) => {
     const clean = val.replace(/[^A-Z0-9]/gi, '').toUpperCase();
@@ -359,111 +383,150 @@ const GSRTCNexus: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex-1 relative bg-[#0a0c10] flex items-center justify-center">
-                {/* Mock Map Placeholder */}
-                <div className="absolute inset-0 opacity-20 pointer-events-none">
-                   <div className="w-full h-full" style={{ backgroundImage: 'radial-gradient(#ffffff11 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-                </div>
-                
-                <div className="text-center z-10 space-y-4">
-                  <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto animate-pulse">
-                    <Navigation size={32} className="text-primary" />
-                  </div>
-                  <h3 className="text-xl font-medium">Tracking Intelligence Enabled</h3>
-                  <p className="text-text-muted max-w-sm mx-auto text-sm">
-                    Searching for fleet signals. GPS telemetry will appear here once a valid vehicle ID is provided.
-                  </p>
-                </div>
+              <div className="flex-1 relative bg-[#05070a] flex flex-col md:flex-row p-6 gap-6 overflow-y-auto">
+                {trackingData ? (
+                  <>
+                    {/* Left Panel: Telemetry & Events */}
+                    <div className="flex-1 space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <section className="glass p-6 rounded-2xl border border-white/5 relative overflow-hidden">
+                          <div className="flex items-center justify-between mb-6">
+                            <div className="flex flex-col">
+                              <h3 className="text-sm font-bold uppercase tracking-widest text-text-dim flex items-center gap-2">
+                                <Activity size={14} className="text-primary" /> Trip Summary
+                              </h3>
+                              <p className="text-2xl font-bold mt-1">{formatVehicleNo(searchQuery)}</p>
+                            </div>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isLive ? 'bg-green-500/20 text-green-500 animate-pulse' : 'bg-white/10 text-text-dim'}`}>
+                              {isLive ? 'LIVE' : 'OFFLINE'}
+                            </span>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-[10px] text-text-dim uppercase font-bold">Departure</p>
+                              <p className="text-sm font-medium">{trackingData.depot}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-text-dim uppercase font-bold">Last Station</p>
+                              <p className="text-sm font-medium">{trackingData.lastStation || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-text-dim uppercase font-bold">Last Arrival</p>
+                              <p className="text-sm font-medium">{trackingData.lastArrival || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-text-dim uppercase font-bold">Status</p>
+                              <p className="text-sm font-medium text-primary">{trackingData.status}</p>
+                            </div>
+                          </div>
 
-                {/* Example Bus Overlay if searched */}
-                {searchQuery.length > 5 && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="absolute bottom-8 left-8 right-8 md:w-96 glass p-6 rounded-3xl border border-white/10 shadow-2xl overflow-y-auto max-h-[80vh]"
-                  >
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Live Telemetry</span>
-                      </div>
-                      <button 
-                        onClick={handleShare}
-                        className="text-[10px] bg-primary/10 text-primary px-3 py-1 rounded-full font-bold hover:bg-primary/20 transition-all"
-                      >
-                        SHARE
-                      </button>
-                    </div>
+                          <div className="mt-6 pt-4 border-t border-white/5 space-y-3">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-text-dim font-medium uppercase tracking-tighter truncate">Next: {trackingData.nextStation}</span>
+                              <span className="text-primary font-bold">ETA: {trackingData.eta}</span>
+                            </div>
+                            <div className="flex items-center justify-between text-[10px] font-mono text-text-dim bg-white/5 p-2 rounded-lg">
+                              <span>Lat: {trackingData.lat}</span>
+                              <span>Long: {trackingData.lng}</span>
+                            </div>
+                          </div>
+                        </section>
 
-                    <div className="space-y-6">
-                      {/* Vehicle Header */}
-                      <div>
-                        <h4 className="text-2xl font-bold">{formatVehicleNo(searchQuery)}</h4>
-                        <p className="text-xs text-text-muted">Ambaji to Mangrol via Palanpur</p>
-                      </div>
-
-                      {/* Station Tracking */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="glass-light p-3 rounded-2xl">
-                          <p className="text-[10px] text-text-dim uppercase font-bold mb-1">Previous Station</p>
-                          <p className="text-sm font-semibold">Rajkot</p>
-                        </div>
-                        <div className="glass-light p-3 rounded-2xl border-l-4 border-primary">
-                          <p className="text-[10px] text-primary uppercase font-bold mb-1">Next Station</p>
-                          <p className="text-sm font-semibold">Virpur (Gondal)</p>
-                        </div>
-                      </div>
-
-                      {/* Speed & ETA Telemetry */}
-                      <div className="grid grid-cols-3 gap-2">
-                        <div className="glass-light p-2 rounded-xl text-center">
-                          <p className="text-[8px] text-text-dim uppercase">Speed</p>
-                          <p className="text-xs font-bold">62 km/h</p>
-                        </div>
-                        <div className="glass-light p-2 rounded-xl text-center">
-                          <p className="text-[8px] text-text-dim uppercase">Status</p>
-                          <p className="text-xs font-bold text-green-400">OnTrip</p>
-                        </div>
-                        <div className="glass-light p-2 rounded-xl text-center">
-                          <p className="text-[8px] text-text-dim uppercase">ETA</p>
-                          <p className="text-xs font-bold">19:06</p>
-                        </div>
-                      </div>
-
-                      {/* Event Timeline */}
-                      <div className="space-y-4">
-                        <p className="text-[10px] text-text-dim uppercase font-bold tracking-widest">Recent Events</p>
-                        <div className="space-y-3">
-                          {[
-                            { event: 'Departed', time: '16:45', status: 'On time', color: 'bg-primary' },
-                            { event: 'Last Stop', time: '17:30', status: 'Checked', color: 'bg-white/20' }
-                          ].map((item, i) => (
-                            <div key={i} className="flex items-center gap-3">
-                              <div className={`w-1.5 h-1.5 rounded-full ${item.color}`} />
-                              <div className="flex-1 flex items-center justify-between">
-                                <p className="text-xs font-medium">{item.event}</p>
-                                <div className="text-right">
-                                  <p className="text-[10px] font-bold">{item.time}</p>
-                                  <p className="text-[8px] text-text-dim">{item.status}</p>
+                        <section className="glass p-6 rounded-2xl border border-white/5 flex flex-col justify-between">
+                          <h3 className="text-sm font-bold uppercase tracking-widest text-text-dim flex items-center gap-2 mb-4">
+                            <Navigation2 size={14} className="text-primary" /> Live Location
+                          </h3>
+                          <div className="flex-1 bg-white/5 rounded-xl flex items-center justify-center relative overflow-hidden group">
+                             <div className="absolute inset-0 opacity-20 bg-[url('https://tile.openstreetmap.org/12/2873/1778.png')] bg-cover" />
+                             <div className="relative z-10 flex flex-col items-center gap-2">
+                                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/50">
+                                   <Bus size={18} className="text-white" />
                                 </div>
+                                <div className="glass px-3 py-1 rounded-full text-[10px] font-bold border border-primary/30">
+                                  {trackingData.speed} KM/H
+                                </div>
+                             </div>
+                          </div>
+                        </section>
+                      </div>
+
+                      <section className="glass p-6 rounded-2xl border border-white/5">
+                        <div className="flex items-center justify-between mb-6">
+                           <h3 className="text-sm font-bold uppercase tracking-widest text-text-dim flex items-center gap-2">
+                              <History size={14} className="text-primary" /> Recent Events
+                           </h3>
+                           <button className="text-[10px] font-bold text-primary hover:underline">VIEW FULL LOG</button>
+                        </div>
+                        
+                        <div className="space-y-4">
+                          {trackingData.events?.map((event, i) => (
+                            <div key={i} className="flex items-start gap-4 relative group">
+                              <div className="mt-1 w-2 h-2 rounded-full bg-primary relative z-10" />
+                              {i !== trackingData.events!.length - 1 && (
+                                <div className="absolute left-[3px] top-4 bottom-[-16px] w-[2px] bg-white/5" />
+                              )}
+                              <div className="flex-1">
+                                <div className="flex items-center justify-between">
+                                  <p className="text-sm font-bold">{event.type}</p>
+                                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                                    event.status === 'On time' ? 'bg-primary/20 text-primary' : 'bg-white/10 text-text-muted'
+                                  }`}>
+                                    {event.status}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-text-dim">{event.location} — {event.time}</p>
                               </div>
                             </div>
                           ))}
                         </div>
-                      </div>
-
-                      {/* Coordinates */}
-                      <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                        <div className="text-[10px] text-text-dim font-mono">
-                          LAT: 21.522155 | LNG: 70.457023
-                        </div>
-                        <button className="text-[10px] font-bold text-primary hover:underline">
-                          CONTACT DRIVER
-                        </button>
-                      </div>
+                      </section>
                     </div>
-                  </motion.div>
+
+                    <div className="w-full md:w-80 space-y-4">
+                       <div className="glass p-6 rounded-2xl border border-white/5 space-y-4">
+                          <h4 className="text-sm font-bold uppercase tracking-widest text-text-dim">Tracking Controls</h4>
+                          <button onClick={handleShare} className="w-full primary-button py-3 text-sm flex items-center justify-center gap-2">
+                            <Share2 size={16} /> Share Tracking
+                          </button>
+                          <button className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2">
+                            <AlertCircle size={16} className="text-accent" /> Report Issue
+                          </button>
+                       </div>
+
+                       <div className="glass p-6 rounded-2xl border border-white/5 space-y-4">
+                          <h4 className="text-sm font-bold uppercase tracking-widest text-text-dim">Fleet Status</h4>
+                          <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider">Signal Strength</span>
+                              <span className="text-[10px] font-bold text-primary">STABLE</span>
+                            </div>
+                            <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                              <div className="h-full bg-primary w-[85%]" />
+                            </div>
+                          </div>
+                          <p className="text-[10px] text-text-dim text-center leading-relaxed">
+                            Telemetry source: <span className="text-primary font-bold">AMNEX VTS PRO</span><br/>
+                            Last synced: {new Date(trackingData.lastUpdated).toLocaleTimeString()}
+                          </p>
+                       </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center z-10 space-y-4 mx-auto my-auto">
+                    <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto animate-pulse">
+                      <Navigation size={32} className="text-primary" />
+                    </div>
+                    <h3 className="text-xl font-medium">Tracking Intelligence Enabled</h3>
+                    <p className="text-text-muted max-w-sm mx-auto text-sm">
+                      Searching for fleet signals. GPS telemetry will appear here once a valid vehicle ID is provided.
+                    </p>
+                  </div>
                 )}
+                
+                <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
+                   <div className="w-full h-full" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+                </div>
               </div>
             </motion.div>
           )}
