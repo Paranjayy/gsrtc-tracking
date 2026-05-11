@@ -380,34 +380,88 @@ const GSRTCNexus: React.FC = () => {
                   <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="absolute bottom-8 left-8 right-8 md:right-auto md:w-80 glass p-6 rounded-2xl border-l-4 border-primary"
+                    className="absolute bottom-8 left-8 right-8 md:w-96 glass p-6 rounded-3xl border border-white/10 shadow-2xl overflow-y-auto max-h-[80vh]"
                   >
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Live Signal</span>
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                        <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Live Telemetry</span>
+                      </div>
                       <button 
                         onClick={handleShare}
-                        className="text-[10px] bg-primary/10 text-primary px-2 py-1 rounded-full font-bold hover:bg-primary/20 transition-all"
+                        className="text-[10px] bg-primary/10 text-primary px-3 py-1 rounded-full font-bold hover:bg-primary/20 transition-all"
                       >
-                        SHARE LINK
+                        SHARE
                       </button>
                     </div>
-                    <h4 className="text-lg font-bold">{formatVehicleNo(searchQuery)}</h4>
-                    <p className="text-xs text-text-muted mb-4">Junagadh Express - Route #402</p>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="glass-light p-2 rounded-lg">
-                        <p className="text-[10px] text-text-dim">SPEED</p>
-                        <p className="font-bold">62 km/h</p>
+
+                    <div className="space-y-6">
+                      {/* Vehicle Header */}
+                      <div>
+                        <h4 className="text-2xl font-bold">{formatVehicleNo(searchQuery)}</h4>
+                        <p className="text-xs text-text-muted">Ambaji to Mangrol via Palanpur</p>
                       </div>
-                      <div className="glass-light p-2 rounded-lg">
-                        <p className="text-[10px] text-text-dim">ETA</p>
-                        <p className="font-bold">12 mins</p>
+
+                      {/* Station Tracking */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="glass-light p-3 rounded-2xl">
+                          <p className="text-[10px] text-text-dim uppercase font-bold mb-1">Previous Station</p>
+                          <p className="text-sm font-semibold">Rajkot</p>
+                        </div>
+                        <div className="glass-light p-3 rounded-2xl border-l-4 border-primary">
+                          <p className="text-[10px] text-primary uppercase font-bold mb-1">Next Station</p>
+                          <p className="text-sm font-semibold">Virpur (Gondal)</p>
+                        </div>
+                      </div>
+
+                      {/* Speed & ETA Telemetry */}
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="glass-light p-2 rounded-xl text-center">
+                          <p className="text-[8px] text-text-dim uppercase">Speed</p>
+                          <p className="text-xs font-bold">62 km/h</p>
+                        </div>
+                        <div className="glass-light p-2 rounded-xl text-center">
+                          <p className="text-[8px] text-text-dim uppercase">Status</p>
+                          <p className="text-xs font-bold text-green-400">OnTrip</p>
+                        </div>
+                        <div className="glass-light p-2 rounded-xl text-center">
+                          <p className="text-[8px] text-text-dim uppercase">ETA</p>
+                          <p className="text-xs font-bold">19:06</p>
+                        </div>
+                      </div>
+
+                      {/* Event Timeline */}
+                      <div className="space-y-4">
+                        <p className="text-[10px] text-text-dim uppercase font-bold tracking-widest">Recent Events</p>
+                        <div className="space-y-3">
+                          {[
+                            { event: 'Departed', time: '16:45', status: 'On time', color: 'bg-primary' },
+                            { event: 'Last Stop', time: '17:30', status: 'Checked', color: 'bg-white/20' }
+                          ].map((item, i) => (
+                            <div key={i} className="flex items-center gap-3">
+                              <div className={`w-1.5 h-1.5 rounded-full ${item.color}`} />
+                              <div className="flex-1 flex items-center justify-between">
+                                <p className="text-xs font-medium">{item.event}</p>
+                                <div className="text-right">
+                                  <p className="text-[10px] font-bold">{item.time}</p>
+                                  <p className="text-[8px] text-text-dim">{item.status}</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Coordinates */}
+                      <div className="flex items-center justify-between pt-4 border-t border-white/5">
+                        <div className="text-[10px] text-text-dim font-mono">
+                          LAT: 21.522155 | LNG: 70.457023
+                        </div>
+                        <button className="text-[10px] font-bold text-primary hover:underline">
+                          CONTACT DRIVER
+                        </button>
                       </div>
                     </div>
-                    
-                    <button className="w-full mt-4 py-2 bg-primary/10 text-primary rounded-lg text-sm font-bold flex items-center justify-center gap-2 hover:bg-primary/20">
-                      View Route Details <ChevronRight size={16} />
-                    </button>
                   </motion.div>
                 )}
               </div>
