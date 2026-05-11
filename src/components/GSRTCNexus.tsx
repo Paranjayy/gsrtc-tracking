@@ -49,15 +49,15 @@ const MagicDatePicker: React.FC<{ selectedDate: string; onChange: (date: string)
           <button
             key={i}
             onClick={() => onChange(date.toISOString().split('T')[0])}
-            className={`flex-shrink-0 w-20 h-28 rounded-3xl flex flex-col items-center justify-center gap-2 transition-all border ${
+            className={`flex-shrink-0 w-16 h-20 md:w-20 md:h-24 rounded-2xl flex flex-col items-center justify-center gap-1.5 transition-all border ${
               isSelected 
-                ? 'bg-primary border-primary text-white shadow-[0_10px_30px_rgba(59,130,246,0.4)] scale-105 z-10' 
+                ? 'bg-primary border-primary text-white shadow-lg shadow-primary/30 scale-105 z-10' 
                 : 'bg-white/5 border-white/5 text-text-dim hover:border-white/20 hover:bg-white/10'
             }`}
           >
-            <span className={`text-[10px] uppercase font-black tracking-[0.2em] ${isSelected ? 'text-white/80' : 'text-text-dim/60'}`}>{date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
-            <span className="text-3xl font-black text-editorial">{date.getDate()}</span>
-            <span className={`text-[10px] font-black uppercase tracking-widest ${isSelected ? 'text-white/60' : 'text-text-dim/40'}`}>{date.toLocaleDateString('en-US', { month: 'short' })}</span>
+            <span className={`text-[9px] md:text-[10px] uppercase font-black tracking-[0.2em] ${isSelected ? 'text-white/80' : 'text-text-dim/60'}`}>{date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+            <span className="text-2xl md:text-3xl font-black text-editorial">{date.getDate()}</span>
+            <span className={`text-[9px] md:text-[10px] font-black uppercase tracking-widest ${isSelected ? 'text-white/60' : 'text-text-dim/40'}`}>{date.toLocaleDateString('en-US', { month: 'short' })}</span>
           </button>
         );
       })}
@@ -74,14 +74,14 @@ const StationAutocomplete: React.FC<{ value: string; onChange: (val: string) => 
 
   return (
     <div className="relative flex-1">
-      <div className="bg-white/5 px-8 py-6 rounded-[2rem] flex flex-col justify-center border border-white/5 hover:border-primary/40 transition-all group focus-within:border-primary focus-within:bg-white/[0.08]">
-        <span className="text-[10px] text-primary font-black uppercase tracking-[0.3em] mb-2 group-hover:translate-x-1 transition-transform">{label}</span>
-        <div className="flex items-center gap-4">
-          <div className="p-2 bg-primary/10 rounded-xl shrink-0">
-            {label === 'Origin' ? <Locate size={20} className="text-primary" /> : <MapPin size={20} className="text-primary" />}
+      <div className="bg-white/5 px-6 py-4 rounded-[1.5rem] flex flex-col justify-center border border-white/5 hover:border-primary/40 transition-all group focus-within:border-primary focus-within:bg-white/[0.08]">
+        <span className="text-[9px] text-primary font-black uppercase tracking-[0.3em] mb-1.5 group-hover:translate-x-1 transition-transform">{label}</span>
+        <div className="flex items-center gap-3">
+          <div className="p-1.5 bg-primary/10 rounded-lg shrink-0">
+            {label === 'Origin' ? <Locate size={18} className="text-primary" /> : <MapPin size={18} className="text-primary" />}
           </div>
           <input 
-            className="bg-transparent w-full text-lg md:text-xl font-black outline-none placeholder:text-text-dim/40 text-editorial tracking-tight truncate" 
+            className="bg-transparent w-full text-base md:text-lg font-black outline-none placeholder:text-text-dim/40 text-editorial tracking-tight truncate" 
             placeholder={`Enter ${label}...`}
             value={value}
             onChange={(e) => { onChange(e.target.value); setShow(true); }}
@@ -160,9 +160,9 @@ const TICKER_ITEMS = [
 ];
 
 const TickerBar: React.FC = () => (
-  <div className="glass border-y border-white/5 py-2 overflow-hidden relative">
+  <div className="border-t border-white/5 py-1.5 overflow-hidden relative bg-[#020408]">
     <div className="flex items-center">
-      <div className="shrink-0 px-4 py-0.5 bg-primary text-white text-[9px] font-black tracking-[0.2em] uppercase z-10 mr-4 rounded-r-full">
+      <div className="shrink-0 px-4 py-0.5 bg-primary text-white text-[9px] font-black tracking-[0.2em] uppercase z-10 mr-4 rounded-r-full shadow-[0_0_10px_rgba(59,130,246,0.3)]">
         LIVE
       </div>
       <div className="ticker-wrap flex-1">
@@ -330,8 +330,8 @@ const GSRTCNexus: React.FC = () => {
   return (
     <div className="min-h-screen pb-20">
       {/* Premium Header & Live Ticker Container */}
-      <div className="fixed top-0 left-0 w-full z-50 flex flex-col">
-        <header className="glass px-6 py-4 flex items-center justify-between border-b border-white/5">
+      <div className="fixed top-0 left-0 w-full z-50 flex flex-col bg-[#020408]/80 backdrop-blur-3xl border-b border-white/5">
+        <header className="px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
               <Bus className="text-white" size={22} />
@@ -342,7 +342,7 @@ const GSRTCNexus: React.FC = () => {
             </div>
           </div>
           
-          <nav className="hidden md:flex items-center gap-1 glass-panel p-1.5 rounded-full text-[10px]">
+          <nav className="hidden md:flex items-center gap-1 bg-white/5 p-1 rounded-full text-[10px] border border-white/5">
             {(['dashboard', 'booking', 'tracking'] as const).map((tab) => (
               <button
                 key={tab}
@@ -363,7 +363,7 @@ const GSRTCNexus: React.FC = () => {
               <p className="text-xs text-text-muted">Current Region</p>
               <p className="text-sm font-semibold">Gujarat, India</p>
             </div>
-            <div className="w-10 h-10 rounded-full glass-light flex items-center justify-center border border-white/10">
+            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center border border-white/5">
               <Info size={18} className="text-text-muted" />
             </div>
           </div>
@@ -373,7 +373,7 @@ const GSRTCNexus: React.FC = () => {
         <TickerBar />
       </div>
 
-      <main className="pt-44 px-4 md:px-6 max-w-7xl mx-auto">
+      <main className="pt-40 px-4 md:px-6 max-w-7xl mx-auto">
         <AnimatePresence mode="wait">
           {activeTab === 'dashboard' ? (
              <motion.div
@@ -476,11 +476,11 @@ const GSRTCNexus: React.FC = () => {
                     <h2 className="text-7xl font-black tracking-tighter mb-2 leading-none">Nexus <span className="text-primary">Booking</span></h2>
                     <p className="text-text-muted text-xl font-medium">Intelligent route discovery with real-time seat telemetry.</p>
                   </div>
-                  <div className="flex items-center gap-3 p-1.5 rounded-2xl glass-panel border border-white/5">
-                    <button className="px-6 py-2 rounded-xl text-xs font-black bg-primary text-white flex items-center gap-2 shadow-lg shadow-primary/20">
+                  <div className="flex items-center gap-2 bg-white/5 p-1 rounded-2xl border border-white/5">
+                    <button className="px-5 py-2 rounded-xl text-[10px] font-black bg-primary text-white flex items-center gap-2 shadow-lg shadow-primary/20">
                        <Zap size={14} /> INSTANT BOOK
                     </button>
-                    <button className="px-6 py-2 rounded-xl text-xs font-bold text-text-dim hover:text-white transition-all uppercase tracking-widest">
+                    <button className="px-5 py-2 rounded-xl text-[10px] font-bold text-text-dim hover:text-white transition-all uppercase tracking-widest">
                        Corporate
                     </button>
                   </div>
