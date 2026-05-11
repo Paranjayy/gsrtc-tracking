@@ -2,12 +2,64 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#020408" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>GSRTC Nexus | Advanced Transit Intelligence</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="description" content="Premium GSRTC bus tracking and booking platform with real-time telemetry, route intelligence, and fleet forensics for Gujarat's transit network." />
+    <meta property="og:title" content="GSRTC Nexus — Advanced Transit Intelligence" />
+    <meta property="og:description" content="Track any GSRTC bus live, book with aggregated Redbus pricing, and access deep forensic telemetry." />
+    <meta property="og:type" content="website" />
+
+    <!-- requestIdleCallback polyfill for Safari -->
+    <script>
+      if (!window.requestIdleCallback) {
+        window.requestIdleCallback = function(cb, options) {
+          var start = Date.now();
+          return setTimeout(function() {
+            cb({
+              didTimeout: false,
+              timeRemaining: function() {
+                return Math.max(0, 50 - (Date.now() - start));
+              }
+            });
+          }, options && options.timeout ? options.timeout : 1);
+        };
+        window.cancelIdleCallback = function(id) {
+          clearTimeout(id);
+        };
+      }
+    </script>
+
+    <!-- Self-hosted system font stack — no external CDN needed -->
+    <style>
+      @font-face {
+        font-family: 'Inter';
+        font-style: normal;
+        font-weight: 100 900;
+        font-display: swap;
+        src: local('Inter'), local('Inter-Regular'), local('-apple-system');
+      }
+      
+      /* Premium font stack that works everywhere including Safari */
+      :root {
+        --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+        --font-mono: 'SF Mono', 'Fira Code', 'JetBrains Mono', Menlo, Monaco, Consolas, monospace;
+      }
+
+      /* Initial loading state */
+      #root:empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: #020408;
+      }
+
+      html { background: #020408; }
+    </style>
   </head>
   <body>
     <div id="root"></div>

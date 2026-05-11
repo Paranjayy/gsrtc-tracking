@@ -134,7 +134,13 @@ const TerminalFeed: React.FC<{ logs: string[] }> = ({ logs }) => {
 };
 
 const GSRTCNexus: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'tracking' | 'booking'>('dashboard');
+  // Slug-based routing: read ?tab= and ?track= from URL on mount
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'tracking' | 'booking'>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    if (tab === 'booking' || tab === 'tracking') return tab;
+    return 'dashboard';
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [sortBy, setSortBy] = useState<'fare' | 'time' | 'seats'>('time');
@@ -169,7 +175,7 @@ const GSRTCNexus: React.FC = () => {
     setRecentSearches(prev => [id, ...prev.filter(p => p !== id)].slice(0, 5));
   };
 
-  // Deep linking for tracking
+  // Sync URL with active tab (slug routing)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const bus = params.get('track');
@@ -178,6 +184,20 @@ const GSRTCNexus: React.FC = () => {
       setActiveTab('tracking');
     }
   }, []);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', activeTab);
+    window.history.replaceState({}, '', url.toString());
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (searchQuery.length >= 6 && activeTab === 'tracking') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('track', searchQuery);
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [searchQuery, activeTab]);
 
   // Live Tracking Polling (Virtual Socket)
   useEffect(() => {
@@ -707,7 +727,7 @@ const GSRTCNexus: React.FC = () => {
                       className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-sm font-bold focus:border-primary transition-all shadow-inner"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && addRecent(searchQuery)}
+                      onKeyDown={(e) => e.key === 'Enter' && addRecent(searchQuery)}
                     />
                   </div>
                   {searchQuery && (
@@ -971,18 +991,18 @@ const GSRTCNexus: React.FC = () => {
         </AnimatePresence>
       </main>
 
-      {/* Floating Action Menu for Mobile */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 glass px-2 py-2 rounded-full flex items-center gap-1 shadow-2xl md:hidden">
-        {(['dashboard', 'booking', 'tracking'] as const).map((tab) => (
+      {/* Mobile Dock */}
+      <div className="mobile-dock md:hidden flex items-center gap-1">
+        {([['dashboard', Grid, 'HOME'], ['booking', Search, 'BOOK'], ['tracking', Navigation, 'TRACK']] as const).map(([tab, Icon, label]) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded-full text-[10px] font-black transition-all flex items-center gap-2 ${
-              activeTab === tab ? 'bg-primary text-white' : 'text-text-muted'
+            className={`flex flex-col items-center gap-1 px-5 py-2.5 rounded-full text-[9px] font-black transition-all ${
+              activeTab === tab ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'text-text-muted hover:text-white'
             }`}
           >
-            {tab === 'dashboard' ? <Grid size={14} /> : tab === 'booking' ? <Search size={14} /> : <Navigation size={14} />}
-            {tab.toUpperCase()}
+            <Icon size={18} />
+            {label}
           </button>
         ))}
       </div>
