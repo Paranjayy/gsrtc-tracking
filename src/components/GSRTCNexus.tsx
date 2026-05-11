@@ -29,7 +29,7 @@ import { MOCK_TRIPS, STATIONS } from '../services/mockData';
 import { GSRTCService } from '../services/gsrtc';
 import type { BusTrip, TrackingInfo } from '../types';
 
-const MagicDatePicker: React.FC<{ selectedDate: string; onChange: (date: string) => void }> = ({ selectedDate, onChange }) => {
+const MagicDatePicker: React.FC<{ selectedDate: string; onChange: (date: string) => void; light?: boolean }> = ({ selectedDate, onChange, light = false }) => {
   const dates = useMemo(() => {
     const arr = [];
     const today = new Date();
@@ -51,13 +51,17 @@ const MagicDatePicker: React.FC<{ selectedDate: string; onChange: (date: string)
             onClick={() => onChange(date.toISOString().split('T')[0])}
             className={`flex-shrink-0 w-16 h-20 md:w-18 md:h-22 rounded-[1.15rem] flex flex-col items-center justify-center gap-1 transition-all border ${
               isSelected 
-                ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20 scale-[1.02] z-10' 
-                : 'bg-white/[0.035] border-white/5 text-text-dim hover:border-white/15 hover:bg-white/[0.06]'
+                ? (light
+                    ? 'booking-chip-active text-white shadow-lg scale-[1.02] z-10'
+                    : 'bg-primary border-primary text-white shadow-lg shadow-primary/20 scale-[1.02] z-10') 
+                : (light
+                    ? 'booking-field text-slate-500 hover:border-slate-300 hover:bg-white'
+                    : 'bg-white/[0.035] border-white/5 text-text-dim hover:border-white/15 hover:bg-white/[0.06]')
             }`}
           >
-            <span className={`text-[9px] uppercase font-extrabold tracking-[0.18em] ${isSelected ? 'text-white/78' : 'text-text-dim/55'}`}>{date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+            <span className={`text-[9px] uppercase font-extrabold tracking-[0.18em] ${isSelected ? (light ? 'text-white/80' : 'text-white/78') : light ? 'text-slate-500' : 'text-text-dim/55'}`}>{date.toLocaleDateString('en-US', { weekday: 'short' })}</span>
             <span className="text-2xl md:text-[2rem] font-black text-editorial">{date.getDate()}</span>
-            <span className={`text-[9px] font-extrabold uppercase tracking-[0.22em] ${isSelected ? 'text-white/65' : 'text-text-dim/40'}`}>{date.toLocaleDateString('en-US', { month: 'short' })}</span>
+            <span className={`text-[9px] font-extrabold uppercase tracking-[0.22em] ${isSelected ? (light ? 'text-white/65' : 'text-white/65') : light ? 'text-slate-400' : 'text-text-dim/40'}`}>{date.toLocaleDateString('en-US', { month: 'short' })}</span>
           </button>
         );
       })}
@@ -65,7 +69,7 @@ const MagicDatePicker: React.FC<{ selectedDate: string; onChange: (date: string)
   );
 };
 
-const StationAutocomplete: React.FC<{ value: string; onChange: (val: string) => void; label: string }> = ({ value, onChange, label }) => {
+const StationAutocomplete: React.FC<{ value: string; onChange: (val: string) => void; label: string; light?: boolean }> = ({ value, onChange, label, light = false }) => {
   const [show, setShow] = useState(false);
   const filtered = useMemo(() => 
     STATIONS.filter(s => s.toLowerCase().includes(value.toLowerCase()) && s !== value).slice(0, 5),
@@ -74,14 +78,14 @@ const StationAutocomplete: React.FC<{ value: string; onChange: (val: string) => 
 
   return (
     <div className="relative flex-1">
-      <div className="soft-field px-5 py-4 flex flex-col justify-center transition-all group focus-within:border-primary/40 focus-within:bg-white/[0.07]">
-        <span className="text-[9px] text-primary font-black uppercase tracking-[0.28em] mb-1 group-hover:translate-x-1 transition-transform">{label}</span>
+      <div className={`${light ? 'booking-field' : 'soft-field'} px-5 py-4 flex flex-col justify-center transition-all group focus-within:border-primary/40 focus-within:bg-white/[0.07]`}>
+        <span className={`text-[9px] font-black uppercase tracking-[0.28em] mb-1 group-hover:translate-x-1 transition-transform ${light ? 'text-primary' : 'text-primary'}`}>{label}</span>
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-xl shrink-0">
             {label === 'Origin' ? <Locate size={16} className="text-primary" /> : <MapPin size={16} className="text-primary" />}
           </div>
           <input 
-            className="bg-transparent w-full text-base md:text-lg font-semibold outline-none placeholder:text-text-dim/40 text-white tracking-tight truncate" 
+            className={`bg-transparent w-full text-base md:text-lg font-semibold outline-none placeholder:text-text-dim/40 tracking-tight truncate ${light ? 'text-slate-900 placeholder:text-slate-400' : 'text-white'}`} 
             placeholder={`Enter ${label}...`}
             value={value}
             onChange={(e) => { onChange(e.target.value); setShow(true); }}
@@ -96,15 +100,15 @@ const StationAutocomplete: React.FC<{ value: string; onChange: (val: string) => 
             initial={{ opacity: 0, y: 15, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 15, scale: 0.95 }}
-            className="absolute top-full left-0 w-full mt-3 glass-panel p-2.5 rounded-[1.35rem] z-[60] border border-white/10 shadow-3xl"
+            className={`absolute top-full left-0 w-full mt-3 p-2.5 rounded-[1.35rem] z-[60] ${light ? 'booking-panel' : 'glass-panel border border-white/10 shadow-3xl'}`}
           >
             {filtered.map(s => (
               <button
                 key={s}
                 onClick={() => { onChange(s); setShow(false); }}
-                className="w-full text-left px-4 py-3 rounded-xl hover:bg-white/8 text-sm font-semibold transition-all flex items-center justify-between group/item"
+                className={`w-full text-left px-4 py-3 rounded-xl transition-all flex items-center justify-between group/item ${light ? 'text-slate-700 hover:bg-slate-100' : 'hover:bg-white/8 text-sm font-semibold'}`}
               >
-                <span className="group-hover/item:text-white transition-colors">{s}</span>
+                <span className={`transition-colors ${light ? 'group-hover/item:text-slate-950' : 'group-hover/item:text-white'}`}>{s}</span>
                 <ArrowRight size={16} className="opacity-0 group-hover/item:opacity-100 group-hover/item:translate-x-1 transition-all" />
               </button>
             ))}
@@ -337,11 +341,21 @@ const GSRTCNexus: React.FC = () => {
     GSRTC: processedTrips.filter((trip) => trip.source === 'GSRTC').length,
     REDBUS: processedTrips.filter((trip) => trip.source === 'REDBUS').length,
   }), [processedTrips]);
+  const featuredTrip = processedTrips[0];
+  const avgFare = useMemo(() => {
+    if (processedTrips.length === 0) return 0;
+    const total = processedTrips.reduce((sum, trip) => sum + trip.fare, 0);
+    return Math.round(total / processedTrips.length);
+  }, [processedTrips]);
 
-  const FiltersPanel = (
-    <div className="stat-card space-y-4 p-5">
+  const bookingShellClass = 'booking-shell relative overflow-hidden rounded-[2.4rem] md:rounded-[2.8rem]';
+  const bookingSectionTitle = 'text-[10px] font-black uppercase tracking-[0.24em] text-slate-500';
+  const bookingPanelClass = 'booking-panel';
+
+  const FiltersPanel: React.FC<{ light?: boolean }> = ({ light = false }) => (
+    <div className={`${light ? bookingPanelClass : 'stat-card'} space-y-4 p-5`}>
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold flex items-center gap-2">
+        <h3 className={`font-semibold flex items-center gap-2 ${light ? 'text-slate-900' : 'text-white'}`}>
           <Filter size={16} /> Filters
         </h3>
         <button className="text-xs text-primary hover:underline" onClick={() => {
@@ -355,16 +369,16 @@ const GSRTCNexus: React.FC = () => {
       </div>
 
       <div className="space-y-3">
-        <label className="section-title block">Bus type</label>
+        <label className={`${light ? bookingSectionTitle : 'section-title'} block`}>Bus type</label>
         <div className="flex flex-wrap gap-2">
           {busTypes.map(type => (
             <button
               key={type}
               onClick={() => setFilterType(type)}
-              className={`px-3 py-1.5 text-xs font-semibold border transition-all soft-chip ${
-                filterType === type 
-                ? 'soft-chip-active' 
-                : 'hover:border-white/18'
+              className={`px-3 py-1.5 text-xs font-semibold border transition-all ${
+                light
+                  ? `${filterType === type ? 'booking-chip-active' : 'booking-chip hover:border-slate-300'}`
+                  : `soft-chip ${filterType === type ? 'soft-chip-active' : 'hover:border-white/18'}`
               }`}
             >
               {type}
@@ -374,14 +388,16 @@ const GSRTCNexus: React.FC = () => {
       </div>
 
       <div className="space-y-3">
-        <label className="section-title block">Source</label>
+        <label className={`${light ? bookingSectionTitle : 'section-title'} block`}>Source</label>
         <div className="flex gap-2">
           {['ALL', 'GSRTC', 'REDBUS'].map(src => (
             <button
               key={src}
               onClick={() => setFilterSource(src as any)}
-              className={`flex-1 py-2 text-[10px] font-black border transition-all soft-chip ${
-                filterSource === src ? 'soft-chip-active' : ''
+              className={`flex-1 py-2 text-[10px] font-black border transition-all ${
+                light
+                  ? `${filterSource === src ? 'booking-chip-active' : 'booking-chip'}`
+                  : `soft-chip ${filterSource === src ? 'soft-chip-active' : ''}`
               }`}
             >
               {src}
@@ -391,32 +407,36 @@ const GSRTCNexus: React.FC = () => {
       </div>
 
       <div className="space-y-3">
-        <label className="section-title block">Sort by</label>
+        <label className={`${light ? bookingSectionTitle : 'section-title'} block`}>Sort by</label>
         <select 
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as any)}
-          className="w-full soft-field p-3 text-sm text-text-main outline-none"
+          className={`w-full p-3 text-sm outline-none ${light ? 'booking-field text-slate-900' : 'soft-field text-text-main'}`}
         >
           <option value="time">Departure Time</option>
           <option value="fare">Lowest Fare</option>
           <option value="seats">Most Seats</option>
         </select>
       </div>
-      <div className="space-y-3 border-t border-white/5 pt-5">
-        <label className="section-title block">Group by</label>
+      <div className={`space-y-3 pt-5 ${light ? 'border-t border-slate-200' : 'border-t border-white/5'}`}>
+        <label className={`${light ? bookingSectionTitle : 'section-title'} block`}>Group by</label>
         <div className="flex gap-2">
           <button
             onClick={() => setGroupBy('none')}
-            className={`flex-1 py-2 text-xs font-semibold border transition-all soft-chip ${
-              groupBy === 'none' ? 'soft-chip-active' : ''
+            className={`flex-1 py-2 text-xs font-semibold border transition-all ${
+              light
+                ? `${groupBy === 'none' ? 'booking-chip-active' : 'booking-chip'}`
+                : `soft-chip ${groupBy === 'none' ? 'soft-chip-active' : ''}`
             }`}
           >
             None
           </button>
           <button
             onClick={() => setGroupBy('type')}
-            className={`flex-1 py-2 text-xs font-semibold border transition-all soft-chip ${
-              groupBy === 'type' ? 'soft-chip-active' : ''
+            className={`flex-1 py-2 text-xs font-semibold border transition-all ${
+              light
+                ? `${groupBy === 'type' ? 'booking-chip-active' : 'booking-chip'}`
+                : `soft-chip ${groupBy === 'type' ? 'soft-chip-active' : ''}`
             }`}
           >
             Bus Type
@@ -568,20 +588,27 @@ const GSRTCNexus: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="space-y-8"
+              className={`${bookingShellClass} space-y-8 px-4 py-5 md:px-6 md:py-6 text-slate-900`}
             >
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute -top-32 left-0 h-72 w-72 rounded-full bg-blue-300/30 blur-3xl" />
+                <div className="absolute top-20 right-0 h-80 w-80 rounded-full bg-cyan-200/25 blur-3xl" />
+                <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px)] bg-[size:32px_32px] opacity-40" />
+              </div>
+              <div className="relative z-10 space-y-8">
               {/* Redesigned Search Section */}
               <section className="space-y-6">
-                <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6">
+                <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
                   <div className="hero-copy">
-                    <h2 className="text-4xl md:text-5xl font-black tracking-tight mb-3 leading-[0.95] text-editorial">Nexus <span className="text-primary">booking</span></h2>
-                    <p className="text-text-muted text-base md:text-lg max-w-2xl">Intelligent route discovery with real-time seat telemetry, laid out with more air and less noise.</p>
+                    <p className={`${bookingSectionTitle} mb-3 text-primary`}>Booking console</p>
+                    <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-3 leading-[0.92] text-slate-950 text-editorial">Route search, <span className="text-primary">reframed</span></h2>
+                    <p className="text-slate-600 text-base md:text-lg max-w-2xl">A calmer booking desk with clearer route cards, fewer collisions, and faster decisions.</p>
                   </div>
-                  <div className="flex items-center gap-2 bg-white/5 p-1 rounded-full border border-white/5">
-                    <button className="px-4 py-2 rounded-full text-[10px] font-black bg-primary text-white flex items-center gap-2 shadow-lg shadow-primary/16 uppercase tracking-[0.18em]">
+                  <div className="flex items-center gap-2 booking-panel p-1.5 rounded-full self-start">
+                    <button className="px-4 py-2 rounded-full text-[10px] font-black bg-slate-950 text-white flex items-center gap-2 shadow-lg uppercase tracking-[0.18em]">
                        <Zap size={14} /> Instant book
                     </button>
-                    <button className="px-4 py-2 rounded-full text-[10px] font-bold text-text-dim hover:text-white transition-all uppercase tracking-[0.18em]">
+                    <button className="px-4 py-2 rounded-full text-[10px] font-bold text-slate-500 hover:text-slate-900 transition-all uppercase tracking-[0.18em]">
                        Corporate
                     </button>
                   </div>
@@ -596,10 +623,10 @@ const GSRTCNexus: React.FC = () => {
                         setDestination(preset.destination);
                         setActiveTab('booking');
                       }}
-                      className="text-left stat-card p-4 rounded-[1.35rem] hover:border-primary/20 transition-all group"
+                      className="text-left booking-panel p-4 rounded-[1.35rem] hover:border-primary/30 transition-all group"
                     >
-                      <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-2">Quick route</p>
-                      <p className="text-sm md:text-base font-black tracking-tight group-hover:text-primary transition-colors">
+                      <p className={`${bookingSectionTitle} text-primary mb-2`}>Quick route</p>
+                      <p className="text-sm md:text-base font-black tracking-tight text-slate-950 group-hover:text-primary transition-colors">
                         {preset.label}
                       </p>
                     </button>
@@ -607,35 +634,77 @@ const GSRTCNexus: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div className="stat-card p-4 rounded-[1.35rem]">
-                    <p className="section-title">Matched routes</p>
-                    <p className="text-2xl font-black mt-2 tabular-nums">{processedTrips.length}</p>
-                    <p className="text-[10px] text-text-dim mt-1 uppercase tracking-[0.18em]">Live inventory from current filters</p>
+                  <div className="booking-panel p-4 rounded-[1.35rem]">
+                    <p className={bookingSectionTitle}>Matched routes</p>
+                    <p className="text-2xl font-black mt-2 tabular-nums text-slate-950">{processedTrips.length}</p>
+                    <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-[0.18em]">Live inventory from current filters</p>
                   </div>
-                  <div className="stat-card p-4 rounded-[1.35rem]">
-                    <p className="section-title text-primary">Direct inventory</p>
-                    <p className="text-2xl font-black mt-2 tabular-nums">{sourceCounts.GSRTC}</p>
-                    <p className="text-[10px] text-text-dim mt-1 uppercase tracking-[0.18em]">GSRTC direct sources</p>
+                  <div className="booking-panel p-4 rounded-[1.35rem]">
+                    <p className={`${bookingSectionTitle} text-primary`}>Direct inventory</p>
+                    <p className="text-2xl font-black mt-2 tabular-nums text-slate-950">{sourceCounts.GSRTC}</p>
+                    <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-[0.18em]">GSRTC direct sources</p>
                   </div>
-                  <div className="stat-card p-4 rounded-[1.35rem]">
-                    <p className="section-title text-secondary">Partner inventory</p>
-                    <p className="text-2xl font-black mt-2 tabular-nums">{sourceCounts.REDBUS}</p>
-                    <p className="text-[10px] text-text-dim mt-1 uppercase tracking-[0.18em]">Redbus indexed routes</p>
+                  <div className="booking-panel p-4 rounded-[1.35rem]">
+                    <p className={`${bookingSectionTitle} text-secondary`}>Partner inventory</p>
+                    <p className="text-2xl font-black mt-2 tabular-nums text-slate-950">{sourceCounts.REDBUS}</p>
+                    <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-[0.18em]">Redbus indexed routes</p>
                   </div>
                 </div>
 
-                <div className="p-2 rounded-[2rem] glass-panel flex flex-col md:flex-row items-stretch gap-2">
+                <div className="grid grid-cols-1 xl:grid-cols-[1.25fr,0.75fr] gap-3">
+                  <div className="booking-panel p-5 rounded-[1.5rem] flex flex-col md:flex-row md:items-center gap-4">
+                    <div className="flex-1">
+                      <p className={`${bookingSectionTitle} text-primary`}>Live route overview</p>
+                      <p className="text-lg md:text-xl font-black tracking-tight mt-2 text-slate-950">A cleaner search surface for daily booking.</p>
+                      <p className="text-sm text-slate-600 mt-1 max-w-2xl">Use presets, filters, and quick seat actions without the page feeling crowded.</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 min-w-[18rem]">
+                      <div className="booking-field p-3">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Avg fare</p>
+                        <p className="text-xl font-black mt-2 tabular-nums text-slate-950">₹{avgFare}</p>
+                      </div>
+                      <div className="booking-field p-3">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Filter set</p>
+                        <p className="text-xl font-black mt-2 text-slate-950">{filterType === 'ALL' ? 'All' : filterType}</p>
+                      </div>
+                      <div className="booking-field p-3">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Source</p>
+                        <p className="text-xl font-black mt-2 text-slate-950">{filterSource}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="booking-panel p-5 rounded-[1.5rem]">
+                    <p className={bookingSectionTitle}>Featured route</p>
+                    <div className="mt-3 space-y-2">
+                      <p className="text-lg font-black tracking-tight text-slate-950">{featuredTrip?.origin} to {featuredTrip?.destination}</p>
+                      <div className="flex items-center justify-between text-sm text-slate-600">
+                        <span>{featuredTrip?.departureTime} departure</span>
+                        <span>{featuredTrip?.arrivalTime} arrival</span>
+                      </div>
+                      <div className="progress-track mt-3">
+                        <div className="progress-fill" style={{ width: '58%' }} />
+                      </div>
+                      <div className="flex items-center justify-between pt-2 text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                        <span>{featuredTrip?.busType}</span>
+                        <span>₹{featuredTrip?.fare}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-2 rounded-[2rem] booking-panel flex flex-col xl:flex-row items-stretch gap-2">
                   <div className="flex-1 flex flex-col md:flex-row gap-2 relative">
-                    <StationAutocomplete value={origin} onChange={setOrigin} label="Origin" />
+                    <StationAutocomplete value={origin} onChange={setOrigin} label="Origin" light />
                     
                     <div 
                       onClick={() => { const tmp = origin; setOrigin(destination); setDestination(tmp); }}
-                      className="w-12 h-12 self-center bg-white/5 rounded-full flex items-center justify-center rotate-90 md:rotate-0 text-text-dim hover:text-primary transition-all cursor-pointer z-10 border border-white/5 shadow-xl hover:scale-105"
+                      className="w-12 h-12 self-center booking-field rounded-full flex items-center justify-center rotate-90 md:rotate-0 text-slate-500 hover:text-primary transition-all cursor-pointer z-10 hover:scale-105"
                     >
                        <ArrowRight size={18} />
                     </div>
 
-                    <StationAutocomplete value={destination} onChange={setDestination} label="Destination" />
+                    <StationAutocomplete value={destination} onChange={setDestination} label="Destination" light />
                   </div>
 
                   <button 
@@ -643,7 +712,7 @@ const GSRTCNexus: React.FC = () => {
                       setIsSearching(true);
                       setTimeout(() => setIsSearching(false), 1500);
                     }}
-                    className="primary-button md:w-60 rounded-[1.5rem] flex items-center justify-center gap-4 py-5"
+                    className="bg-slate-950 text-white md:w-60 rounded-[1.5rem] flex items-center justify-center gap-4 py-5 shadow-[0_16px_35px_rgba(15,23,42,0.2)]"
                   >
                     <AnimatePresence mode="wait">
                       {isSearching ? (
@@ -675,40 +744,40 @@ const GSRTCNexus: React.FC = () => {
 
                 <div className="space-y-4">
                    <div className="flex items-center justify-between">
-                      <h3 className="section-title flex items-center gap-2">
+                      <h3 className={`${bookingSectionTitle} flex items-center gap-2`}>
                          <Calendar size={14} className="text-primary" /> Select Travel Date
                       </h3>
                    </div>
-                   <MagicDatePicker selectedDate={travelDate} onChange={setTravelDate} />
+                   <MagicDatePicker selectedDate={travelDate} onChange={setTravelDate} light />
                 </div>
               </section>
 
               {/* Filters & Results */}
-              <div className="flex flex-col md:flex-row gap-8">
+              <div className="grid grid-cols-1 xl:grid-cols-[290px_minmax(0,1fr)_300px] gap-6 items-start">
                 {/* Sidebar Filters */}
-                <aside className="hidden md:block w-full md:w-64 space-y-6">
-                  {FiltersPanel}
+                <aside className="hidden xl:block space-y-6 sticky top-44">
+                  <FiltersPanel light />
                 </aside>
 
                 {/* Results List */}
                 <div className="flex-1 space-y-4 min-w-0">
                   <div className="flex items-center justify-between mb-2">
                     <div>
-                      <p className="text-text-muted text-sm">Showing {processedTrips.length} results</p>
-                      <p className="text-[10px] text-text-dim uppercase tracking-[0.18em] mt-1">
+                      <p className="text-slate-600 text-sm">Showing {processedTrips.length} results</p>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-[0.18em] mt-1">
                         {sourceCounts.GSRTC} GSRTC • {sourceCounts.REDBUS} Redbus
                       </p>
                     </div>
-                    <div className="flex items-center gap-2 glass-light p-1 rounded-full">
+                    <div className="flex items-center gap-2 booking-panel p-1 rounded-full">
                       <button 
                         onClick={() => setViewMode('list')}
-                        className={`p-1.5 rounded-full transition-all ${viewMode === 'list' ? 'bg-white/10 text-white' : 'text-text-dim'}`}
+                        className={`p-1.5 rounded-full transition-all ${viewMode === 'list' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}
                       >
                         <ListIcon size={18} />
                       </button>
                       <button 
                         onClick={() => setViewMode('grid')}
-                        className={`p-1.5 rounded-full transition-all ${viewMode === 'grid' ? 'bg-white/10 text-white' : 'text-text-dim'}`}
+                        className={`p-1.5 rounded-full transition-all ${viewMode === 'grid' ? 'bg-slate-900 text-white' : 'text-slate-500'}`}
                       >
                         <Grid size={18} />
                       </button>
@@ -718,11 +787,11 @@ const GSRTCNexus: React.FC = () => {
                   <div className="md:hidden flex items-center justify-between gap-3">
                     <button
                       onClick={() => setIsMobileFiltersOpen(prev => !prev)}
-                      className="soft-chip px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em]"
+                      className="booking-chip px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em]"
                     >
                       {isMobileFiltersOpen ? 'Hide filters' : 'Show filters'}
                     </button>
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-text-dim">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
                       {groupBy === 'none' ? 'Ungrouped' : 'Grouped by bus type'}
                     </p>
                   </div>
@@ -735,16 +804,16 @@ const GSRTCNexus: React.FC = () => {
                         exit={{ opacity: 0, y: -10 }}
                         className="md:hidden"
                       >
-                        {FiltersPanel}
+                        <FiltersPanel light />
                       </motion.div>
                     )}
                   </AnimatePresence>
 
-                  <div className={viewMode === 'grid' ? 'grid grid-cols-1 xl:grid-cols-2 gap-3' : 'space-y-4'}>
+                  <div className="space-y-3">
                     {Object.entries(groupedTrips).map(([group, trips]) => (
-                      <div key={group} className={viewMode === 'list' ? 'space-y-4' : 'contents'}>
+                      <div key={group} className="space-y-3">
                         {groupBy !== 'none' && (
-                          <h3 className="text-base font-bold text-primary flex items-center gap-2 mb-2">
+                          <h3 className="text-base font-bold text-primary flex items-center gap-2 mb-1">
                             <ChevronRight size={20} /> {group}
                           </h3>
                         )}
@@ -752,80 +821,72 @@ const GSRTCNexus: React.FC = () => {
                           <motion.div
                             layout
                             key={trip.id}
-                            className={`glass-card p-5 md:p-6 rounded-[1.6rem] group border border-white/5 hover:border-primary/24 overflow-hidden relative ${
-                              viewMode === 'list' ? 'flex flex-col gap-5' : 'flex flex-col'
-                            }`}
+                            className="booking-panel p-4 md:p-5 rounded-[1.4rem] group overflow-hidden relative"
                           >
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[100px] -mr-32 -mt-32 pointer-events-none" />
-                            <div className="flex-1 grid gap-5 xl:grid-cols-[1.4fr,0.6fr] items-start">
-                              <div className="space-y-4 min-w-0">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <span className="text-[10px] font-black text-primary uppercase tracking-[0.22em]">{trip.busType}</span>
-                                  <span className="text-[10px] md:text-xs font-semibold text-text-dim tracking-[0.18em] uppercase">{trip.busNumber}</span>
-                                  <span className={`text-[10px] font-black px-3 py-1 rounded-full border ${
-                                    trip.source === 'REDBUS' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' : 'bg-green-500/10 border-green-500/20 text-green-400'
-                                  }`}>
-                                    {trip.source === 'REDBUS' ? 'Indexed via Redbus' : 'GSRTC direct'}
-                                  </span>
-                                  <span className="ml-auto flex items-center gap-2 px-2.5 py-1 bg-white/5 rounded-full border border-white/5">
-                                     <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                     <span className="text-[10px] font-black text-green-400 uppercase tracking-[0.18em]">Live</span>
-                                  </span>
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-200/40 blur-[100px] -mr-32 -mt-32 pointer-events-none" />
+                            <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr] items-center">
+                              <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr] items-center">
+                                <div className="space-y-3 min-w-0">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-[10px] font-black text-primary uppercase tracking-[0.22em]">{trip.busType}</span>
+                                    <span className="text-[10px] font-semibold text-slate-500 tracking-[0.18em] uppercase">{trip.busNumber}</span>
+                                    <span className={`text-[10px] font-black px-3 py-1 rounded-full border ${
+                                      trip.source === 'REDBUS' ? 'bg-amber-500/10 border-amber-500/20 text-amber-600' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600'
+                                    }`}>
+                                      {trip.source === 'REDBUS' ? 'Redbus' : 'GSRTC'}
+                                    </span>
+                                  </div>
+                                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 items-center">
+                                    <div className="booking-field px-4 py-3 text-left min-w-0">
+                                      <p className="text-3xl font-black tracking-tight leading-none text-editorial text-slate-950">{trip.departureTime}</p>
+                                      <p className="text-[10px] font-semibold text-slate-500 mt-2 uppercase tracking-[0.18em] truncate">{trip.origin}</p>
+                                    </div>
+                                    <div className="flex flex-col items-center justify-center px-1">
+                                      <div className="px-3 py-1 rounded-full booking-panel border border-primary/20">
+                                         <span className="text-[10px] font-black text-primary uppercase tracking-[0.22em]">Direct</span>
+                                      </div>
+                                      <div className="my-2 flex items-center gap-2">
+                                         <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_10px_rgba(59,130,246,0.55)]" />
+                                         <div className="w-12 md:w-16 h-px bg-gradient-to-r from-primary/90 via-primary/35 to-transparent" />
+                                      </div>
+                                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">{trip.duration}</span>
+                                    </div>
+                                    <div className="booking-field px-4 py-3 text-right min-w-0">
+                                      <p className="text-3xl font-black tracking-tight leading-none text-editorial text-slate-950">{trip.arrivalTime}</p>
+                                      <p className="text-[10px] font-semibold text-slate-500 mt-2 uppercase tracking-[0.18em] truncate">{trip.destination}</p>
+                                    </div>
+                                  </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 items-center">
-                                  <div className="soft-field px-4 py-4 text-left min-w-0">
-                                    <p className="text-3xl md:text-[2.65rem] font-black tracking-tight leading-none text-editorial">{trip.departureTime}</p>
-                                    <p className="text-[10px] font-semibold text-text-dim mt-2 uppercase tracking-[0.18em] truncate">{trip.origin}</p>
+                                <div className="grid gap-2 xl:justify-items-end">
+                                  <div className="xl:text-right">
+                                    <p className={bookingSectionTitle}>Fare</p>
+                                    <p className="text-4xl font-black text-slate-950 tracking-tight leading-none text-editorial">₹{trip.fare}</p>
                                   </div>
-
-                                  <div className="flex flex-col items-center justify-center px-1">
-                                    <div className="px-3 py-1 rounded-full glass-panel border border-primary/20">
-                                       <span className="text-[10px] font-black text-primary uppercase tracking-[0.24em]">Direct</span>
-                                    </div>
-                                    <div className="my-2.5 flex items-center gap-2">
-                                       <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_10px_rgba(59,130,246,0.65)]" />
-                                       <div className="w-14 md:w-20 h-px bg-gradient-to-r from-primary/90 via-primary/35 to-transparent" />
-                                    </div>
-                                    <span className="text-[10px] font-black text-text-dim uppercase tracking-[0.22em]">{trip.duration}</span>
-                                  </div>
-
-                                  <div className="soft-field px-4 py-4 text-right min-w-0">
-                                    <p className="text-3xl md:text-[2.65rem] font-black tracking-tight leading-none text-editorial">{trip.arrivalTime}</p>
-                                    <p className="text-[10px] font-semibold text-text-dim mt-2 uppercase tracking-[0.18em] truncate">{trip.destination}</p>
+                                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+                                    <div className={`w-1.5 h-1.5 rounded-full ${trip.seatsAvailable < 10 ? 'bg-accent' : 'bg-primary'}`} />
+                                    <span>{trip.seatsAvailable} seats left</span>
                                   </div>
                                 </div>
                               </div>
 
-                              <div className={`flex flex-col justify-between gap-3 ${viewMode === 'list' ? 'xl:border-l xl:border-white/10 xl:pl-5' : 'pt-1'}`}>
-                                <div className="space-y-1 xl:text-right">
-                                  <p className="section-title">Operational fare</p>
-                                  <p className="text-4xl md:text-[2.9rem] font-black text-white tracking-tight leading-none text-editorial">₹{trip.fare}</p>
-                                  <div className="flex items-center xl:justify-end gap-2 mt-2">
-                                     <div className={`w-1.5 h-1.5 rounded-full ${trip.seatsAvailable < 10 ? 'bg-accent' : 'bg-primary'}`} />
-                                     <p className={`text-[10px] font-black tracking-[0.18em] uppercase ${trip.seatsAvailable < 10 ? 'text-accent' : 'text-primary'}`}>
-                                       {trip.seatsAvailable} seats remaining
-                                     </p>
-                                  </div>
-                                </div>
-                                <div className="grid grid-cols-1 gap-2">
-                                  <button 
-                                    className="primary-button w-full h-11 rounded-[0.95rem] flex items-center justify-center gap-3 text-[11px]"
-                                    onClick={() => window.open(trip.source === 'REDBUS' ? 'https://www.redbus.in/' : 'https://gsrtc.in/site/', '_blank')}
-                                  >
-                                    Select seat <ArrowRight size={15} />
-                                  </button>
-                                  <button 
-                                    className="w-full h-9 glass-panel hover:bg-white/8 rounded-[0.95rem] flex items-center justify-center gap-2 transition-all font-semibold text-[10px] uppercase tracking-[0.18em] text-text-dim hover:text-white group/track"
-                                    onClick={() => {
-                                      setSearchQuery(trip.busNumber);
-                                      setActiveTab('tracking');
-                                      handleManualScan();
-                                    }}
-                                  >
-                                    <Activity size={13} className="text-primary group-hover/track:animate-pulse" /> Track telemetry
-                                  </button>
-                                </div>
+                              <div className="grid grid-cols-2 gap-2 xl:grid-cols-1 xl:justify-items-stretch">
+                                <button 
+                                  className="w-full h-11 rounded-[0.9rem] flex items-center justify-center gap-2 text-[11px] bg-slate-950 text-white font-black uppercase tracking-[0.18em]"
+                                  onClick={() => window.open(trip.source === 'REDBUS' ? 'https://www.redbus.in/' : 'https://gsrtc.in/site/', '_blank')}
+                                >
+                                  Choose seats <ArrowRight size={14} />
+                                </button>
+                                <button 
+                                  className="w-full h-11 booking-field hover:bg-white rounded-[0.9rem] flex items-center justify-center gap-2 transition-all font-semibold text-[10px] uppercase tracking-[0.18em] text-slate-500 hover:text-slate-900 group/track"
+                                  onClick={() => {
+                                    setSearchQuery(trip.busNumber);
+                                    setActiveTab('tracking');
+                                    handleManualScan();
+                                  }}
+                                >
+                                  <Activity size={13} className="text-primary group-hover/track:animate-pulse" /> Track
+                                </button>
                               </div>
                             </div>
                           </motion.div>
@@ -834,6 +895,33 @@ const GSRTCNexus: React.FC = () => {
                     ))}
                   </div>
                 </div>
+
+                <aside className="hidden xl:block space-y-4 sticky top-44">
+                  <div className="booking-panel p-5 rounded-[1.5rem] space-y-3">
+                    <p className={bookingSectionTitle}>Route summary</p>
+                    <p className="text-lg font-black tracking-tight text-slate-950">{featuredTrip?.origin} → {featuredTrip?.destination}</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="booking-field p-3">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Duration</p>
+                        <p className="text-lg font-black mt-2 text-slate-950">{featuredTrip?.duration}</p>
+                      </div>
+                      <div className="booking-field p-3">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Seats</p>
+                        <p className="text-lg font-black mt-2 text-slate-950">{featuredTrip?.seatsAvailable}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="booking-panel p-5 rounded-[1.5rem] space-y-3">
+                    <p className={bookingSectionTitle}>Action notes</p>
+                    <ul className="space-y-3 text-sm text-slate-600">
+                      <li>Keep filters narrow for faster browsing.</li>
+                      <li>Track a vehicle from the route card when you need telemetry.</li>
+                      <li>Use the quick route presets to jump between common trips.</li>
+                    </ul>
+                  </div>
+                </aside>
+              </div>
               </div>
             </motion.div>
           ) : (
