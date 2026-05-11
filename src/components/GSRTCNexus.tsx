@@ -29,6 +29,17 @@ import { MOCK_TRIPS, STATIONS } from '../services/mockData';
 import { GSRTCService } from '../services/gsrtc';
 import type { BusTrip, TrackingInfo } from '../types';
 
+const safeReadArray = (key: string) => {
+  try {
+    const value = localStorage.getItem(key);
+    if (!value) return [];
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
 const MagicDatePicker: React.FC<{ selectedDate: string; onChange: (date: string) => void; light?: boolean }> = ({ selectedDate, onChange, light = false }) => {
   const dates = useMemo(() => {
     const arr = [];
@@ -204,10 +215,11 @@ const GSRTCNexus: React.FC = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
-  const [favorites, setFavorites] = useState<string[]>(() => JSON.parse(localStorage.getItem('nexus_favs') || '[]'));
-  const [recentSearches, setRecentSearches] = useState<string[]>(() => JSON.parse(localStorage.getItem('nexus_recent') || '[]'));
+  const [favorites, setFavorites] = useState<string[]>(() => safeReadArray('nexus_favs'));
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => safeReadArray('nexus_recent'));
   const [origin, setOrigin] = useState('Junagadh Busport');
   const [destination, setDestination] = useState('Rajkot Busport');
+  const [copyState, setCopyState] = useState<'booking' | 'tracking' | null>(null);
 
   useEffect(() => {
     localStorage.setItem('nexus_favs', JSON.stringify(favorites));
@@ -216,6 +228,16 @@ const GSRTCNexus: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('nexus_recent', JSON.stringify(recentSearches));
   }, [recentSearches]);
+
+  useEffect(() => {
+    if (activeTab !== 'booking') return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', 'booking');
+    url.searchParams.set('origin', origin);
+    url.searchParams.set('destination', destination);
+    url.searchParams.set('date', travelDate);
+    window.history.replaceState({}, '', url.toString());
+  }, [activeTab, origin, destination, travelDate]);
 
   const toggleFavorite = (id: string) => {
     setFavorites(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
@@ -233,6 +255,18 @@ const GSRTCNexus: React.FC = () => {
     if (bus) {
       setSearchQuery(bus);
       setActiveTab('tracking');
+      return;
+    }
+
+    const incomingTab = params.get('tab');
+    if (incomingTab === 'booking') {
+      const incomingOrigin = params.get('origin');
+      const incomingDestination = params.get('destination');
+      const incomingDate = params.get('date');
+      if (incomingOrigin) setOrigin(incomingOrigin);
+      if (incomingDestination) setDestination(incomingDestination);
+      if (incomingDate) setTravelDate(incomingDate);
+      setActiveTab('booking');
     }
   }, []);
 
@@ -290,8 +324,38 @@ const GSRTCNexus: React.FC = () => {
   const handleShare = () => {
     const url = new URL(window.location.href);
     url.searchParams.set('track', searchQuery);
-    navigator.clipboard.writeText(url.toString());
+    navigator.clipboard.writeText(url.toString()).catch(() => {
+      window.prompt('Copy tracking link', url.toString());
+    });
     alert('Tracking link copied for family sharing! 🚀');
+  };
+
+  const copyBookingLink = async () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', 'booking');
+    url.searchParams.set('origin', origin);
+    url.searchParams.set('destination', destination);
+    url.searchParams.set('date', travelDate);
+    try {
+      await navigator.clipboard.writeText(url.toString());
+      setCopyState('booking');
+    } catch {
+      window.prompt('Copy booking link', url.toString());
+    }
+    setTimeout(() => setCopyState(null), 1800);
+  };
+
+  const copyTrackingLink = async () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', 'tracking');
+    url.searchParams.set('track', searchQuery);
+    try {
+      await navigator.clipboard.writeText(url.toString());
+      setCopyState('tracking');
+    } catch {
+      window.prompt('Copy tracking link', url.toString());
+    }
+    setTimeout(() => setCopyState(null), 1800);
   };
 
   // Filtering & Sorting Logic
@@ -610,6 +674,13 @@ const GSRTCNexus: React.FC = () => {
                     </button>
                     <button className="px-4 py-2 rounded-full text-[10px] font-bold text-slate-500 hover:text-slate-900 transition-all uppercase tracking-[0.18em]">
                        Corporate
+                    </button>
+                    <button
+                      onClick={copyBookingLink}
+                      className="px-4 py-2 rounded-full text-[10px] font-black text-slate-600 hover:text-slate-950 transition-all flex items-center gap-2 uppercase tracking-[0.18em]"
+                    >
+                      <Share2 size={12} />
+                      {copyState === 'booking' ? 'Copied' : 'Copy link'}
                     </button>
                   </div>
                 </div>
@@ -955,14 +1026,22 @@ const GSRTCNexus: React.FC = () => {
                     />
                   </div>
                   {searchQuery && (
-                    <button 
-                      onClick={() => toggleFavorite(searchQuery)}
-                      className={`p-4 rounded-2xl border transition-all ${
-                        favorites.includes(searchQuery) ? 'bg-primary/16 border-primary text-primary' : 'bg-white/5 border-white/10 text-text-dim'
-                      }`}
-                    >
-                      <Star size={20} fill={favorites.includes(searchQuery) ? 'currentColor' : 'none'} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={copyTrackingLink}
+                        className="p-4 rounded-2xl border transition-all bg-white/5 border-white/10 text-text-dim hover:text-white hover:border-primary/30"
+                      >
+                        <Share2 size={18} />
+                      </button>
+                      <button 
+                        onClick={() => toggleFavorite(searchQuery)}
+                        className={`p-4 rounded-2xl border transition-all ${
+                          favorites.includes(searchQuery) ? 'bg-primary/16 border-primary text-primary' : 'bg-white/5 border-white/10 text-text-dim'
+                        }`}
+                      >
+                        <Star size={20} fill={favorites.includes(searchQuery) ? 'currentColor' : 'none'} />
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -1178,6 +1257,9 @@ const GSRTCNexus: React.FC = () => {
                           </h4>
                           <button onClick={handleManualScan} disabled={isScanning} className="w-full bg-primary/10 border border-primary/20 text-primary py-3 rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2 hover:bg-primary/18">
                              {isScanning ? 'Scanning...' : 'Trigger deep scan'} <SearchCode size={16} />
+                          </button>
+                          <button onClick={copyTrackingLink} className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2">
+                            <Share2 size={16} /> {copyState === 'tracking' ? 'Link copied' : 'Copy route link'}
                           </button>
                           <button onClick={handleShare} className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2">
                             <Share2 size={16} /> Share intelligence
